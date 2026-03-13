@@ -1,22 +1,22 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Ferramenta Arquimedes</title>
+<title>Ferramenta Arquimedes - Geometria</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
 
 body{
-font-family:Arial;
+font-family:Arial, Helvetica, sans-serif;
 background:#f3f4f6;
 text-align:center;
+margin:20px;
 }
 
 canvas{
 border:2px solid #333;
+background:white;
 margin-top:10px;
 }
 
@@ -43,7 +43,7 @@ font-size:18px;
 
 <br>
 
-<canvas id="canvas" width="800" height="500"></canvas>
+<canvas id="canvas" width="900" height="500"></canvas>
 
 <br>
 
@@ -57,8 +57,8 @@ font-size:18px;
 const canvas = document.getElementById("canvas")
 const ctx = canvas.getContext("2d")
 
-let image = null
-let points = []
+let image=null
+let points=[]
 
 document.getElementById("imageLoader").addEventListener("change",loadImage,false)
 
@@ -66,11 +66,11 @@ function loadImage(e){
 
 const reader = new FileReader()
 
-reader.onload = function(event){
+reader.onload=function(event){
 
 image = new Image()
 
-image.onload = function(){
+image.onload=function(){
 drawCanvas()
 }
 
@@ -98,7 +98,6 @@ drawCanvas()
 function drawGrid(){
 
 let size = 25
-
 ctx.strokeStyle="#e5e7eb"
 
 for(let x=0;x<canvas.width;x+=size){
@@ -151,9 +150,7 @@ ctx.beginPath()
 ctx.moveTo(points[0].x,points[0].y)
 
 for(let i=1;i<points.length;i++){
-
 ctx.lineTo(points[i].x,points[i].y)
-
 }
 
 ctx.closePath()
@@ -226,16 +223,16 @@ let [a,b,c]=sides
 let tol=0.5
 
 if(Math.abs(a-b)<tol && Math.abs(b-c)<tol)
-return "Triângulo Equilátero"
+return "Equilátero"
 
 if(
 Math.abs(a-b)<tol ||
 Math.abs(b-c)<tol ||
 Math.abs(a-c)<tol
 )
-return "Triângulo Isósceles"
+return "Isósceles"
 
-return "Triângulo Escaleno"
+return "Escaleno"
 
 }
 
@@ -286,7 +283,6 @@ function analyze(){
 if(points.length<3){
 
 alert("Marque pelo menos 3 pontos")
-
 return
 
 }
@@ -296,10 +292,7 @@ let sides=[]
 for(let i=0;i<points.length;i++){
 
 let j=(i+1)%points.length
-
-sides.push(
-distance(points[i],points[j])
-)
+sides.push(distance(points[i],points[j]))
 
 }
 
