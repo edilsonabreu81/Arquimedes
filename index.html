@@ -1,149 +1,224 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>Arquimedes - Detector Geométrico Profissional</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detector Geométrico Arquimedes - Oficial</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; background: #f0f2f5; height: 100vh; }
-        #sidebar { width: 300px; background: #2c3e50; color: white; padding: 20px; box-shadow: 2px 0 5px rgba(0,0,0,0.1); }
-        #main { flex: 1; padding: 20px; display: flex; flex-direction: column; align-items: center; }
-        .canvas-container { background: white; padding: 10px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); position: relative; }
-        canvas { border: 1px solid #bdc3c7; background: #fff; cursor: crosshair; }
-        .input-group { margin-bottom: 15px; }
-        label { display: block; font-size: 0.8em; color: #bdc3c7; margin-bottom: 5px; }
-        input, select { width: 100%; padding: 8px; border-radius: 4px; border: none; }
-        button { width: 100%; padding: 10px; margin-top: 10px; border-radius: 4px; border: none; cursor: pointer; font-weight: bold; transition: 0.3s; }
-        .btn-build { background: #3498db; color: white; }
-        .btn-email { background: #27ae60; color: white; margin-top: 20px; }
-        .results-box { margin-top: 20px; font-size: 0.9em; line-height: 1.6; border-top: 1px solid #7f8c8d; padding-top: 10px; }
+        /* Requisitos de Sistema e Interface (Source: 415, 937) */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #ec4899 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255,255,255,0.97);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 { text-align: center; color: #667eea; margin-bottom: 20px; }
+        
+        /* Sistema de Tabs (Source: 1271) */
+        .tabs { display: flex; gap: 10px; border-bottom: 3px solid #667eea; margin-bottom: 20px; }
+        .tab { 
+            padding: 12px 25px; border: none; background: none; cursor: pointer; 
+            font-weight: bold; color: #667eea; border-radius: 10px 10px 0 0;
+        }
+        .tab.active { background: #667eea; color: white; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* Área de Trabalho e Canvas (Source: 1301) */
+        canvas { 
+            display: block; margin: 20px auto; border: 3px solid #667eea; 
+            border-radius: 10px; background: #f8f9fa; max-width: 100%; 
+        }
+        .controls { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin: 15px 0; }
+        
+        /* Componentes de Interface */
+        .btn { padding: 12px 24px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .btn-primary { background: #3b82f6; color: white; }
+        .btn-success { background: #22c55e; color: white; }
+        .btn-danger { background: #ef4444; color: white; }
+        
+        /* Painel de KPIs e Resultados (Source: 435, 1648) */
+        .results-panel { 
+            background: #f0f9ff; padding: 20px; border-radius: 12px; 
+            margin-top: 20px; border-left: 6px solid #007bff;
+        }
+        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; }
+        .kpi-box { background: white; padding: 10px; border-radius: 8px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
     </style>
 </head>
 <body>
 
-<div id="sidebar">
-    <h3>⚙️ Configurações [cite: 21]</h3>
-    <div class="input-group">
-        <label>Tipo de Polígono</label>
-        <select id="shapeType">
-            <option value="3">Triângulo</option>
-            <option value="4">Quadrilátero</option>
-            <option value="5">Pentágono</option>
-            <option value="6">Hexágono</option>
-        </select>
-    </div>
-    <div class="input-group">
-        <label>Comprimento do Lado (px)</label>
-        <input type="number" id="sideLength" value="150">
-    </div>
-    <button class="btn-build" onclick="gerarPoligonoRegular()">Criar com Características [cite: 64]</button>
-    
-    <div class="results-box" id="analysisResults">
-        <strong>Resultados[cite: 20]:</strong>
-        <div id="details">Aguardando construção...</div>
+<div class="container">
+    <h1>🔍 Detector Geométrico Arquimedes</h1>
+
+    <div class="tabs">
+        <button class="tab active" onclick="openTab(event, 'medir')">📏 Medir Imagem</button>
+        <button class="tab" onclick="openTab(event, 'personalizado')">🎯 Polígono por Parâmetros</button>
     </div>
 
-    <button class="btn-email" onclick="enviarParaProfessor()">Enviar para o Professor ✉️</button>
-</div>
-
-<div id="main">
-    <h2>Detector Geométrico Arquimedes [cite: 2]</h2>
-    <div class="canvas-container">
-        <canvas id="geoCanvas" width="800" height="600"></canvas>
+    <div id="medir" class="tab-content active">
+        <div style="text-align: center;">
+            <input type="file" id="uploadFile" hidden accept="image/*">
+            <button class="btn btn-primary" onclick="document.getElementById('uploadFile').click()">📷 Carregar Imagem</button>
+            <button class="btn btn-primary" onclick="autoDetect()">🤖 Detecção Automática</button>
+        </div>
+        <canvas id="mainCanvas" width="800" height="500"></canvas>
+        <div class="controls">
+            <button class="btn btn-danger" onclick="clearCanvas()">🗑️ Limpar</button>
+            <button class="btn btn-success" onclick="processResults()">📊 Calcular Resultados</button>
+        </div>
     </div>
-    <p><small>Dica: Você também pode clicar no canvas para desenho livre. [cite: 28]</small></p>
+
+    <div id="personalizado" class="tab-content">
+        <div class="controls">
+            <label>Lados:</label>
+            <input type="number" id="numSides" value="3" min="3" max="12" style="width: 60px; padding: 5px;">
+            <button class="btn btn-primary" onclick="generateParametricInputs()">Configurar Características</button>
+        </div>
+        <div id="parameterInputs" class="controls"></div>
+        <div style="text-align: center;">
+            <button class="btn btn-success" onclick="buildParametricShape()">📐 Criar e Analisar</button>
+        </div>
+    </div>
+
+    <div id="resultsDisplay" class="results-panel" style="display: none;">
+        <h3>✅ Resultados da Análise</h3>
+        <div class="kpi-grid" id="kpiGrid"></div>
+        <div id="detailedAnalysis" style="margin-top: 15px;"></div>
+        <div class="controls">
+            <button class="btn btn-success" onclick="downloadResult()">💾 Baixar Imagem</button>
+            <button class="btn btn-primary" onclick="sendToProfessor()">📧 Enviar ao Professor</button>
+        </div>
+    </div>
 </div>
 
 <script>
-    const canvas = document.getElementById('geoCanvas');
+    const canvas = document.getElementById('mainCanvas');
     const ctx = canvas.getContext('2d');
     let points = [];
-    let currentShapeData = "";
+    let lastAnalysis = null;
+    let bgImage = null;
 
-    // Construção por Características (Polígono Regular)
-    function gerarPoligonoRegular() {
-        points = [];
-        const sides = parseInt(document.getElementById('shapeType').value);
-        const length = parseFloat(document.getElementById('sideLength').value);
-        const centerX = canvas.width / 2;
-        const centerY = canvas.height / 2;
-
-        for (let i = 0; i < sides; i++) {
-            const angle = (i * 2 * Math.PI) / sides;
-            points.push({
-                x: centerX + length * Math.cos(angle),
-                y: centerY + length * Math.sin(angle)
-            });
-        }
-        analisarEletura();
+    // Inicialização de Tabs
+    function openTab(evt, tabName) {
+        let contents = document.getElementsByClassName("tab-content");
+        for (let content of contents) content.classList.remove("active");
+        let tabs = document.getElementsByClassName("tab");
+        for (let tab of tabs) tab.classList.remove("active");
+        document.getElementById(tabName).classList.add("active");
+        evt.currentTarget.classList.add("active");
     }
 
-    // Clique livre (opcional mantido)
-    canvas.addEventListener('click', (e) => {
+    // Carregamento de Imagem (Source: 1453)
+    document.getElementById('uploadFile').onchange = function(e) {
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            bgImage = new Image();
+            bgImage.onload = () => { draw(); };
+            bgImage.src = event.target.result;
+        };
+        reader.readAsDataURL(e.target.files[0]);
+    };
+
+    // Desenho e Interação (Source: 1531)
+    canvas.onclick = (e) => {
         const rect = canvas.getBoundingClientRect();
         points.push({ x: e.clientX - rect.left, y: e.clientY - rect.top });
-        if(points.length >= 3) analisarEletura();
-        else draw();
-    });
+        draw();
+    };
 
     function draw() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        if (points.length === 0) return;
-        ctx.beginPath();
-        ctx.moveTo(points[0].x, points[0].y);
-        points.forEach(p => ctx.lineTo(p.x, p.y));
-        ctx.closePath();
-        ctx.strokeStyle = '#3498db';
-        ctx.lineWidth = 2;
-        ctx.stroke();
-        points.forEach(p => {
-            ctx.fillStyle = '#e74c3c';
-            ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, Math.PI*2); ctx.fill();
-        });
+        if (bgImage) ctx.drawImage(bgImage, 0, 0, canvas.width, canvas.height);
+        
+        if (points.length > 0) {
+            ctx.beginPath();
+            ctx.moveTo(points[0].x, points[0].y);
+            points.forEach(p => ctx.lineTo(p.x, p.y));
+            if (points.length > 2) ctx.closePath();
+            ctx.strokeStyle = "#22c55e";
+            ctx.lineWidth = 3;
+            ctx.stroke();
+            points.forEach(p => {
+                ctx.fillStyle = "#ef4444";
+                ctx.beginPath(); ctx.arc(p.x, p.y, 5, 0, Math.PI*2); ctx.fill();
+            });
+        }
     }
 
-    function analisarEletura() {
-        draw();
-        const n = points.length;
-        if (n < 3) return;
-
-        // Cálculo de Lados e Ângulos Internos
-        let totalPerimetro = 0;
-        let infoLados = "";
-        let infoAngulos = "";
-        const anguloInterno = ((n - 2) * 180) / n; // Para polígonos regulares
-
-        for (let i = 0; i < n; i++) {
-            const p1 = points[i];
-            const p2 = points[(i + 1) % n];
-            const dist = Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
-            totalPerimetro += dist;
-            infoLados += `Lado ${i+1}: ${dist.toFixed(1)}px | `;
+    // Lógica de Análise (Source: 1614, 1636)
+    function processResults() {
+        if (points.length < 3) return alert("Defina ao menos 3 vértices!");
+        
+        let perimeter = 0;
+        let sides = [];
+        for (let i = 0; i < points.length; i++) {
+            let p1 = points[i];
+            let p2 = points[(i + 1) % points.length];
+            let d = Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2)) / 20; // Escala simbólica
+            sides.push(d);
+            perimeter += d;
         }
 
-        currentShapeData = `
-            <b>Forma:</b> ${n} Lados [cite: 61]<br>
-            <b>Ângulos Internos:</b> ${anguloInterno.toFixed(1)}° (aprox)<br>
-            <b>Perímetro:</b> ${totalPerimetro.toFixed(2)}px <br>
-            <b>Lados:</b> ${infoLados}
-        `;
-        document.getElementById('details').innerHTML = currentShapeData;
+        // Cálculo de Área (Source: 1643)
+        let area = 0;
+        for (let i = 0; i < points.length; i++) {
+            area += (points[i].x * points[(i+1)%points.length].y) - (points[(i+1)%points.length].x * points[i].y);
+        }
+        area = Math.abs(area / (2 * 400)); // Ajuste de escala
+
+        lastAnalysis = { 
+            name: points.length === 3 ? "Triângulo" : "Quadrilátero",
+            n: points.length,
+            perimeter: perimeter, 
+            area: area,
+            sides: sides
+        };
+
+        displayKPIs();
     }
 
-    function enviarParaProfessor() {
-        if (points.length < 3) { alert("Crie uma figura primeiro! [cite: 47]"); return; }
+    function displayKPIs() {
+        const grid = document.getElementById('kpiGrid');
+        grid.innerHTML = `
+            <div class="kpi-box"><strong>Forma</strong><br>${lastAnalysis.name}</div>
+            <div class="kpi-box"><strong>Perímetro</strong><br>${lastAnalysis.perimeter.toFixed(2)} cm</div>
+            <div class="kpi-box"><strong>Área</strong><br>${lastAnalysis.area.toFixed(2)} cm²</div>
+        `;
+        document.getElementById('resultsDisplay').style.display = 'block';
+    }
+
+    // Envio por E-mail (Source: 2172, 2199)
+    function sendToProfessor() {
+        if (!lastAnalysis) return alert("Execute a análise primeiro!");
         
-        // Exportar imagem (conforme FAQ do manual) [cite: 256]
+        const professorEmail = "edilsonduarte@gmail.com";
+        let body = `Olá Professor,%0D%0A%0D%0AAnálise do Sistema Arquimedes:%0D%0A`;
+        body += `📐 Forma: ${lastAnalysis.name}%0D%0A📊 Perímetro: ${lastAnalysis.perimeter.toFixed(2)} cm%0D%0A📦 Área: ${lastAnalysis.area.toFixed(2)} cm²%0D%0A`;
+        body += `%0D%0AImportante: Imagem anexada manualmente pelo aluno.`;
+        
+        window.location.href = `mailto:${professorEmail}?subject=Atividade Geometria - Arquimedes&body=${body}`;
+        alert("Email preparado! Lembre-se de baixar e anexar a imagem.");
+    }
+
+    function clearCanvas() { points = []; draw(); document.getElementById('resultsDisplay').style.display='none'; }
+    
+    function downloadResult() {
         const link = document.createElement('a');
         link.download = 'analise_arquimedes.png';
         link.href = canvas.toDataURL();
         link.click();
-
-        const email = "edilsonduarte@gmail.com";
-        const subject = encodeURIComponent("Análise Geométrica - Sistema Arquimedes");
-        const body = encodeURIComponent(`Resultados obtidos:\n\n${document.getElementById('details').innerText.replace(/<br>/g, '\n')}\n\nInstrução: Anexe a imagem baixada a este e-mail.`);
-        
-        window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
     }
 </script>
+
 </body>
 </html>
