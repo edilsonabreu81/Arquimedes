@@ -1,1087 +1,132 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Detector Geométrico Profissional</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    
-    body {
-      font-family: Arial, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #ec4899 100%);
-      padding: 20px;
-      min-height: 100vh;
-    }
-
-    body::before {
-      content: '🧙‍♂️';
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      font-size: 400px;
-      opacity: 0.03;
-      pointer-events: none;
-    }
-
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-      background: rgba(255,255,255,0.95);
-      border-radius: 20px;
-      padding: 30px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-    }
-
-    h1 {
-      text-align: center;
-      color: #667eea;
-      margin-bottom: 20px;
-    }
-
-    .tabs {
-      display: flex;
-      gap: 10px;
-      justify-content: center;
-      margin-bottom: 30px;
-      border-bottom: 3px solid #667eea;
-    }
-
-    .tab {
-      padding: 15px 30px;
-      background: white;
-      border: none;
-      border-top-left-radius: 10px;
-      border-top-right-radius: 10px;
-      font-size: 16px;
-      font-weight: bold;
-      cursor: pointer;
-      color: #667eea;
-      transition: all 0.3s;
-      border: 2px solid transparent;
-      border-bottom: none;
-      position: relative;
-      bottom: -3px;
-    }
-
-    .tab:hover { background: #f3f4f6; }
-    
-    .tab.active {
-      background: #667eea;
-      color: white;
-      border: 2px solid #667eea;
-      border-bottom: 3px solid #667eea;
-    }
-
-    .tab-content { display: none; }
-    .tab-content.active { display: block; }
-
-    .upload-btn {
-      background: #667eea;
-      color: white;
-      padding: 15px 40px;
-      border: none;
-      border-radius: 10px;
-      font-size: 18px;
-      cursor: pointer;
-      margin: 10px;
-    }
-
-    .upload-btn:hover { background: #5568d3; }
-
-    input[type="file"] { display: none; }
-
-    canvas {
-      display: block;
-      margin: 20px auto;
-      border: 3px solid #667eea;
-      border-radius: 10px;
-      cursor: crosshair;
-      background: #f0f0f0;
-    }
-
-    .btn {
-      padding: 12px 24px;
-      border: none;
-      border-radius: 8px;
-      font-size: 16px;
-      font-weight: bold;
-      cursor: pointer;
-      transition: transform 0.2s;
-      margin: 5px;
-    }
-
-    .btn:hover { transform: translateY(-2px); }
-    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-    .btn-primary { background: #3b82f6; color: white; }
-    .btn-success { background: #22c55e; color: white; }
-    .btn-danger { background: #ef4444; color: white; }
-    .btn-warning { background: #f59e0b; color: white; }
-    .btn-info { background: #8b5cf6; color: white; }
-
-    .info-box {
-      background: #e0e7ff;
-      padding: 20px;
-      border-radius: 10px;
-      margin: 20px 0;
-    }
-
-    .status {
-      text-align: center;
-      padding: 15px;
-      border-radius: 10px;
-      margin: 15px 0;
-      font-weight: bold;
-      font-size: 16px;
-    }
-
-    .status-info { background: #dbeafe; color: #1e40af; }
-    .status-success { background: #d1fae5; color: #065f46; }
-    .status-error { background: #fee2e2; color: #991b1b; }
-    .status-warning { background: #fef3c7; color: #92400e; }
-
-    .mode-btn {
-      width: 100%;
-      padding: 15px;
-      border: 3px solid #667eea;
-      background: white;
-      color: #667eea;
-      border-radius: 10px;
-      font-weight: bold;
-      cursor: pointer;
-      transition: all 0.3s;
-      margin-bottom: 10px;
-    }
-
-    .mode-btn.active {
-      background: #667eea;
-      color: white;
-    }
-
-    .results {
-      background: #f9fafb;
-      padding: 20px;
-      border-radius: 10px;
-      margin-top: 20px;
-      display: none;
-    }
-
-    input[type="number"], select {
-      padding: 10px;
-      font-size: 16px;
-      border: 2px solid #667eea;
-      border-radius: 8px;
-      margin: 5px;
-    }
-
-    .controls {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      justify-content: center;
-      margin: 20px 0;
-    }
-
-    .validation-box {
-      background: white;
-      border: 2px solid #e5e7eb;
-      border-radius: 10px;
-      padding: 20px;
-      margin: 20px 0;
-    }
-
-    .validation-item {
-      padding: 10px;
-      margin: 8px 0;
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .validation-item.valid {
-      background: #d1fae5;
-      color: #065f46;
-    }
-
-    .validation-item.invalid {
-      background: #fee2e2;
-      color: #991b1b;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arquimedes - Geometria Interativa</title>
+    <style>
+        body { font-family: sans-serif; margin: 20px; background-color: #f4f4f9; }
+        .container { max-width: 1200px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        canvas { border: 1px solid #ccc; background: #fff; display: block; margin: 10px 0; cursor: crosshair; width: 100%; max-width: 800px; }
+        .controls { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
+        button { padding: 10px 15px; cursor: pointer; border: none; border-radius: 4px; background-color: #007bff; color: white; transition: 0.3s; }
+        button:hover { background-color: #0056b3; }
+        .btn-email { background-color: #28a745; }
+        .btn-email:hover { background-color: #218838; }
+        .results-panel { background: #e9ecef; padding: 15px; border-radius: 4px; margin-top: 20px; }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <h1>📐 Detector Geométrico Profissional</h1>
 
-    <div class="tabs">
-      <button class="tab active" onclick="switchTab(0)">📏 Medir Figura</button>
-      <button class="tab" onclick="switchTab(1)">🎯 Polígono Personalizado</button>
+<div class="container">
+    <h2>Sistema Arquimedes: Geometria Interativa [cite: 19, 61]</h2>
+    <p>Clique no canvas para definir os vértices do polígono.</p>
+
+    <div class="controls">
+        <button onclick="limparCanvas()">Limpar Tela [cite: 77]</button>
+        <button onclick="analisarPoligono()">Analisar Geometria [cite: 102]</button>
+        <button class="btn-email" onclick="enviarParaProfessor()">Enviar para o Professor ✉️</button>
     </div>
 
-    <!-- ABA 1: Medir -->
-    <div id="tab0" class="tab-content active">
-      <div style="text-align: center;">
-        <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
-          📷 Carregar Imagem
-        </button>
-        <input type="file" id="fileInput" accept="image/*">
-        
-        <div style="margin-top: 15px;">
-          <label><strong>Escala:</strong></label>
-          <input type="number" id="scaleValue" value="10" step="0.1" min="0.1" style="width: 100px;">
-          <span><strong>cm</strong></span>
-        </div>
-      </div>
+    <canvas id="geometryCanvas" width="800" height="500"></canvas>
 
-      <div id="status" class="status status-info">ℹ️ Carregue uma imagem</div>
-
-      <div style="text-align: center; margin: 20px 0;">
-        <button class="mode-btn active" id="modeScale" onclick="setMode('scale')" style="display: inline-block; width: auto; padding: 15px 30px; margin: 5px;">
-          1️⃣ Marcar Escala
-        </button>
-        <button class="mode-btn" id="modeShape" onclick="setMode('shape')" style="display: inline-block; width: auto; padding: 15px 30px; margin: 5px;">
-          2️⃣ Marcar Forma
-        </button>
-      </div>
-
-      <canvas id="canvas" width="800" height="600"></canvas>
-
-      <div class="controls">
-        <button class="btn btn-warning" onclick="undoPoint()">↶ Desfazer</button>
-        <button class="btn btn-success" id="btnAnalyze" onclick="analyze()" disabled>📊 Calcular</button>
-        <button class="btn btn-danger" onclick="clearAll()">🗑️ Limpar</button>
-      </div>
-
-      <div class="info-box">
-        <strong>Pontos:</strong>
-        <div id="points">• Escala: 0/2<br>• Vértices: 0</div>
-      </div>
-
-      <div id="results" class="results"></div>
+    <div id="results" class="results-panel">
+        <strong>Resultados (KPIs):</strong> [cite: 30, 294]
+        <div id="output">Nenhuma análise realizada ainda.</div>
     </div>
+</div>
 
-    <!-- ABA 2: Personalizado -->
-    <div id="tab1" class="tab-content">
-      <h3>🎯 Polígono Personalizado</h3>
-      <p style="color: #666; margin: 10px 0;">Configure lados e/ou ângulos</p>
-      
-      <div style="margin: 20px 0;">
-        <label><strong>Número de Lados:</strong></label>
-        <input type="number" id="numSides" min="3" max="12" value="3" onchange="generateCustomInputs()">
-      </div>
+<script>
+    const canvas = document.getElementById('geometryCanvas');
+    const ctx = canvas.getContext('2d');
+    const output = document.getElementById('output');
+    let pontos = [];
+    let ultimaAnalise = null;
 
-      <div style="margin: 20px 0;">
-        <label><strong>Modo:</strong></label>
-        <select id="creationMode" onchange="toggleCreationMode()">
-          <option value="sides">Apenas Lados</option>
-          <option value="angles">Apenas Ângulos</option>
-          <option value="both">Lados e Ângulos</option>
-        </select>
-      </div>
-
-      <div id="sidesSection" style="margin: 20px 0;">
-        <h4>Lados (cm):</h4>
-        <div id="customSideInputs"></div>
-      </div>
-
-      <div id="anglesSection" style="margin: 20px 0; display: none;">
-        <h4>Ângulos (graus):</h4>
-        <div id="customAngleInputs"></div>
-        <div id="angleSumInfo" style="margin-top: 10px; padding: 10px; background: #f3f4f6; border-radius: 5px;"></div>
-      </div>
-
-      <div class="controls">
-        <button class="btn btn-success" onclick="validateCustomPolygon()">✓ Validar</button>
-        <button class="btn btn-warning" onclick="clearCustom()">🔄 Limpar</button>
-      </div>
-
-      <div id="customValidationResults"></div>
-      <div id="customShapePreview" style="display: none; margin-top: 20px;">
-        <canvas id="customPreviewCanvas" width="600" height="400" style="border: 3px solid #22c55e;"></canvas>
-        <div id="customShapeInfo" style="margin-top: 15px;"></div>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    // Variáveis globais
-    var img = null;
-    var scalePoints = [];
-    var vertices = [];
-    var mode = 'scale';
-
-    var canvas = document.getElementById('canvas');
-    var ctx = canvas.getContext('2d');
-    var customPreviewCanvas = document.getElementById('customPreviewCanvas');
-    var customPreviewCtx = customPreviewCanvas.getContext('2d');
-
-    // Trocar abas
-    function switchTab(index) {
-      var tabs = document.querySelectorAll('.tab');
-      var contents = document.querySelectorAll('.tab-content');
-      
-      for (var i = 0; i < tabs.length; i++) {
-        tabs[i].classList.remove('active');
-        contents[i].classList.remove('active');
-      }
-      
-      tabs[index].classList.add('active');
-      contents[index].classList.add('active');
-    }
-
-    // Status
-    function setStatus(msg, type) {
-      var status = document.getElementById('status');
-      status.className = 'status status-' + type;
-      var icons = {info: 'ℹ️', success: '✅', error: '❌', warning: '⚠️'};
-      status.textContent = icons[type] + ' ' + msg;
-    }
-
-    // Upload
-    document.getElementById('fileInput').addEventListener('change', function(e) {
-      var file = e.target.files[0];
-      if (!file) return;
-
-      setStatus('Carregando...', 'info');
-      
-      var reader = new FileReader();
-      reader.onload = function(event) {
-        var tempImg = new Image();
-        tempImg.onload = function() {
-          img = tempImg;
-          scalePoints = [];
-          vertices = [];
-          drawCanvas();
-          updatePoints();
-          setStatus('Imagem carregada!', 'success');
-          setMode('scale');
-        };
-        tempImg.src = event.target.result;
-      };
-      reader.readAsDataURL(file);
+    // Interação com o canvas [cite: 75]
+    canvas.addEventListener('click', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        pontos.push({x, y});
+        desenhar();
     });
 
-    // Desenhar canvas (Medir)
-    function drawCanvas() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = '#f0f0f0';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      
-      if (!img) {
-        ctx.fillStyle = '#999';
-        ctx.font = '24px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText('Aguardando imagem...', canvas.width/2, canvas.height/2);
-        return;
-      }
+    function desenhar() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        if (pontos.length === 0) return;
 
-      var scale = Math.min(canvas.width / img.width, canvas.height / img.height) * 0.9;
-      var w = img.width * scale;
-      var h = img.height * scale;
-      var x = (canvas.width - w) / 2;
-      var y = (canvas.height - h) / 2;
-
-      ctx.drawImage(img, x, y, w, h);
-
-      // Desenhar pontos
-      for (var i = 0; i < scalePoints.length; i++) {
-        var p = scalePoints[i];
-        ctx.fillStyle = '#ef4444';
         ctx.beginPath();
-        ctx.arc(p.x, p.y, 8, 0, Math.PI * 2);
-        ctx.fill();
-      }
-
-      if (scalePoints.length === 2) {
-        ctx.strokeStyle = '#f59e0b';
-        ctx.lineWidth = 3;
-        ctx.setLineDash([8, 4]);
-        ctx.beginPath();
-        ctx.moveTo(scalePoints[0].x, scalePoints[0].y);
-        ctx.lineTo(scalePoints[1].x, scalePoints[1].y);
-        ctx.stroke();
-        ctx.setLineDash([]);
-      }
-
-      for (var i = 0; i < vertices.length; i++) {
-        var v = vertices[i];
-        ctx.fillStyle = '#22c55e';
-        ctx.beginPath();
-        ctx.arc(v.x, v.y, 7, 0, Math.PI * 2);
-        ctx.fill();
-      }
-
-      if (vertices.length > 0) {
-        ctx.strokeStyle = '#22c55e';
+        ctx.moveTo(pontos[0].x, pontos[0].y);
+        pontos.forEach(p => ctx.lineTo(p.x, p.y));
+        ctx.strokeStyle = '#007bff';
         ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(vertices[0].x, vertices[0].y);
-        for (var i = 1; i < vertices.length; i++) {
-          ctx.lineTo(vertices[i].x, vertices[i].y);
-        }
-        if (vertices.length > 2) ctx.closePath();
         ctx.stroke();
-      }
-    }
 
-    // Clique (Medir)
-    canvas.addEventListener('click', function(e) {
-      if (!img) {
-        setStatus('Carregue uma imagem!', 'error');
-        return;
-      }
-
-      var rect = canvas.getBoundingClientRect();
-      var x = (e.clientX - rect.left) * (canvas.width / rect.width);
-      var y = (e.clientY - rect.top) * (canvas.height / rect.height);
-
-      if (mode === 'scale') {
-        if (scalePoints.length < 2) {
-          scalePoints.push({x: x, y: y});
-          if (scalePoints.length === 2) {
-            setStatus('Escala completa!', 'success');
-            setTimeout(function() { setMode('shape'); }, 1000);
-          }
-        }
-      } else {
-        vertices.push({x: x, y: y});
-        if (vertices.length >= 3) {
-          document.getElementById('btnAnalyze').disabled = false;
-        }
-      }
-
-      updatePoints();
-      drawCanvas();
-    });
-
-    // Modo (Medir)
-    function setMode(newMode) {
-      if (newMode === 'shape' && scalePoints.length < 2) {
-        setStatus('Marque a escala primeiro!', 'error');
-        return;
-      }
-
-      mode = newMode;
-      document.getElementById('modeScale').classList.toggle('active', mode === 'scale');
-      document.getElementById('modeShape').classList.toggle('active', mode === 'shape');
-    }
-
-    // Atualizar pontos (Medir)
-    function updatePoints() {
-      document.getElementById('points').innerHTML = 
-        '• Escala: ' + scalePoints.length + '/2<br>• Vértices: ' + vertices.length;
-    }
-
-    // Desfazer (Medir)
-    function undoPoint() {
-      if (mode === 'scale' && scalePoints.length > 0) {
-        scalePoints.pop();
-      } else if (vertices.length > 0) {
-        vertices.pop();
-        if (vertices.length < 3) document.getElementById('btnAnalyze').disabled = true;
-      }
-      updatePoints();
-      drawCanvas();
-    }
-
-    // Limpar (Medir)
-    function clearAll() {
-      img = null;
-      scalePoints = [];
-      vertices = [];
-      document.getElementById('fileInput').value = '';
-      document.getElementById('btnAnalyze').disabled = true;
-      document.getElementById('results').style.display = 'none';
-      drawCanvas();
-      updatePoints();
-      setStatus('Limpo', 'info');
-    }
-
-    // Analisar (Medir)
-    function analyze() {
-      if (scalePoints.length < 2 || vertices.length < 3) return;
-
-      var scale = Math.min(canvas.width / img.width, canvas.height / img.height) * 0.9;
-      var w = img.width * scale;
-      var h = img.height * scale;
-      var offsetX = (canvas.width - w) / 2;
-      var offsetY = (canvas.height - h) / 2;
-
-      var s1x = (scalePoints[0].x - offsetX) / scale;
-      var s1y = (scalePoints[0].y - offsetY) / scale;
-      var s2x = (scalePoints[1].x - offsetX) / scale;
-      var s2y = (scalePoints[1].y - offsetY) / scale;
-      
-      var scaleDist = Math.hypot(s2x - s1x, s2y - s1y);
-      var scaleVal = parseFloat(document.getElementById('scaleValue').value);
-      var factor = scaleDist / scaleVal;
-
-      var n = vertices.length;
-      var sides = [];
-      
-      for (var i = 0; i < n; i++) {
-        var v1x = (vertices[i].x - offsetX) / scale;
-        var v1y = (vertices[i].y - offsetY) / scale;
-        var v2x = (vertices[(i + 1) % n].x - offsetX) / scale;
-        var v2y = (vertices[(i + 1) % n].y - offsetY) / scale;
-        var dist = Math.hypot(v2x - v1x, v2y - v1y) / factor;
-        sides.push(dist);
-      }
-
-      var perimeter = 0;
-      for (var i = 0; i < sides.length; i++) {
-        perimeter += sides[i];
-      }
-
-      var shapes = {3: 'Triângulo', 4: 'Quadrilátero', 5: 'Pentágono', 6: 'Hexágono'};
-      var name = shapes[n] || 'Polígono';
-
-      var html = '<h3>✅ Resultados</h3>';
-      html += '<p><strong>Forma:</strong> ' + name + '</p>';
-      html += '<p><strong>Lados:</strong> ';
-      for (var i = 0; i < sides.length; i++) {
-        html += 'L' + (i+1) + ': ' + sides[i].toFixed(2) + 'cm ';
-      }
-      html += '</p>';
-      html += '<p><strong>Perímetro:</strong> ' + perimeter.toFixed(2) + ' cm</p>';
-
-      document.getElementById('results').innerHTML = html;
-      document.getElementById('results').style.display = 'block';
-      setStatus('Análise concluída!', 'success');
-    }
-
-    // ----------------------------
-    // ABA 2: POLÍGONO PERSONALIZADO (mantendo lógica original e adicionando etiquetas)
-    // ----------------------------
-    function generateCustomInputs() {
-      var n = parseInt(document.getElementById('numSides').value);
-      
-      var html = '';
-      for (var i = 0; i < n; i++) {
-        html += '<label>Lado ' + (i+1) + ':</label>';
-        html += '<input type="number" id="customSide' + i + '" value="' + ((i+1)*2) + '" step="0.1" min="0.1">';
-      }
-      document.getElementById('customSideInputs').innerHTML = html;
-
-      html = '';
-      var avgAngle = Math.round((n - 2) * 180 / n);
-      for (var i = 0; i < n; i++) {
-        html += '<label>Ângulo ' + (i+1) + ':</label>';
-        html += '<input type="number" id="customAngle' + i + '" value="' + avgAngle + '" step="0.1" min="1" max="179" oninput="updateAngleSum()">';
-      }
-      document.getElementById('customAngleInputs').innerHTML = html;
-      
-      updateAngleSum();
-      document.getElementById('customShapePreview').style.display = 'none';
-      document.getElementById('customValidationResults').innerHTML = '';
-    }
-
-    function toggleCreationMode() {
-      var mode = document.getElementById('creationMode').value;
-      document.getElementById('sidesSection').style.display = (mode === 'sides' || mode === 'both') ? 'block' : 'none';
-      document.getElementById('anglesSection').style.display = (mode === 'angles' || mode === 'both') ? 'block' : 'none';
-      document.getElementById('customShapePreview').style.display = 'none';
-      document.getElementById('customValidationResults').innerHTML = '';
-    }
-
-    function updateAngleSum() {
-      var n = parseInt(document.getElementById('numSides').value);
-      var sum = 0;
-      for (var i = 0; i < n; i++) {
-        var val = parseFloat(document.getElementById('customAngle' + i).value) || 0;
-        sum += val;
-      }
-      var expected = (n - 2) * 180;
-      var valid = Math.abs(sum - expected) < 0.5;
-      var color = valid ? '#22c55e' : '#ef4444';
-      document.getElementById('angleSumInfo').innerHTML = 
-        '<strong>Soma:</strong> ' + sum.toFixed(1) + '° (esperado: ' + expected + '°) ' + 
-        '<span style="color: ' + color + '; font-weight: bold;">' + (valid ? '✓ Válido' : '✗ Inválido') + '</span>';
-    }
-
-    function validateCustomPolygon() {
-      var n = parseInt(document.getElementById('numSides').value);
-      var mode = document.getElementById('creationMode').value;
-      var sides = [];
-      var angles = [];
-
-      if (mode === 'sides' || mode === 'both') {
-        for (var i = 0; i < n; i++) {
-          var val = parseFloat(document.getElementById('customSide' + i).value);
-          if (isNaN(val) || val <= 0) {
-            alert('Insira valores válidos para os lados!');
-            return;
-          }
-          sides.push(val);
-        }
-      }
-
-      if (mode === 'angles' || mode === 'both') {
-        var sum = 0;
-        for (var i = 0; i < n; i++) {
-          var val = parseFloat(document.getElementById('customAngle' + i).value);
-          if (isNaN(val) || val <= 0 || val >= 180) {
-            alert('Insira ângulos válidos (0° a 180°)!');
-            return;
-          }
-          angles.push(val);
-          sum += val;
-        }
-        var expected = (n - 2) * 180;
-        if (Math.abs(sum - expected) > 0.5) {
-          alert('Soma dos ângulos deve ser ' + expected + '°! Atual: ' + sum.toFixed(1) + '°');
-          return;
-        }
-      }
-
-      // Se temos AMBOS lados e ângulos, validar compatibilidade (triângulo casos específicos)
-      if (mode === 'both' && n === 3) {
-        var a = sides[0];
-        var b = sides[1];
-        var c = sides[2];
-        
-        var sortedSides = [a, b, c].sort(function(x, y) { return x - y; });
-        var s1 = sortedSides[0];
-        var s2 = sortedSides[1];
-        var s3 = sortedSides[2];
-        
-        var isPythagorean = Math.abs(s1*s1 + s2*s2 - s3*s3) < 0.01;
-        
-        if (isPythagorean) {
-          var hasRightAngle = false;
-          for (var i = 0; i < 3; i++) {
-            if (Math.abs(angles[i] - 90) < 1) {
-              hasRightAngle = true;
-              break;
-            }
-          }
-          
-          if (!hasRightAngle) {
-            alert('AVISO: Estes lados formam um TRIÂNGULO RETÂNGULO (Teorema de Pitágoras)!\n\n' +
-                  'Um dos ângulos DEVE ser 90°!\n' +
-                  'Seus ângulos: ' + angles[0].toFixed(1) + '°, ' + angles[1].toFixed(1) + '°, ' + angles[2].toFixed(1) + '°\n\n' +
-                  'O polígono será construído usando os LADOS (que são corretos).');
-          }
-        }
-        
-        var cosA = (b*b + c*c - a*a) / (2*b*c);
-        var cosB = (a*a + c*c - b*b) / (2*a*c);
-        var cosC = (a*a + b*b - c*c) / (2*a*b);
-        
-        cosA = Math.max(-1, Math.min(1, cosA));
-        cosB = Math.max(-1, Math.min(1, cosB));
-        cosC = Math.max(-1, Math.min(1, cosC));
-        
-        var angleA = Math.acos(cosA) * 180 / Math.PI;
-        var angleB = Math.acos(cosB) * 180 / Math.PI;
-        var angleC = Math.acos(cosC) * 180 / Math.PI;
-        
-        var tolerance = 5;
-        var anglesMatch = true;
-        var calculatedAngles = [angleA, angleB, angleC].sort(function(x, y) { return x - y; });
-        var providedAngles = [angles[0], angles[1], angles[2]].sort(function(x, y) { return x - y; });
-        
-        for (var i = 0; i < 3; i++) {
-          if (Math.abs(calculatedAngles[i] - providedAngles[i]) > tolerance) {
-            anglesMatch = false;
-            break;
-          }
-        }
-        
-        if (!anglesMatch && !isPythagorean) {
-          alert('AVISO: Os ângulos fornecidos não são compatíveis com os lados!\n\n' +
-                'Ângulos esperados para esses lados:\n' +
-                '∠1 = ' + angleA.toFixed(1) + '°, ∠2 = ' + angleB.toFixed(1) + '°, ∠3 = ' + angleC.toFixed(1) + '°\n\n' +
-                'O polígono será construído usando os LADOS fornecidos.');
-        }
-      }
-
-      if (mode === 'both' && n === 3) {
-        var allAnglesEqual = Math.abs(angles[0] - angles[1]) < 0.5 && 
-                             Math.abs(angles[1] - angles[2]) < 0.5;
-        var allSidesEqual = Math.abs(sides[0] - sides[1]) < 0.1 && 
-                            Math.abs(sides[1] - sides[2]) < 0.1;
-        
-        if (allAnglesEqual && !allSidesEqual) {
-          alert('AVISO: Com ângulos iguais (' + angles[0].toFixed(1) + '°), o triângulo deve ser EQUILÁTERO (lados iguais)!\n\n' +
-                'O polígono será construído, mas a geometria pode não ser exata.');
-        }
-      }
-      
-      if (mode === 'sides' && n === 3) {
-        var a = sides[0];
-        var b = sides[1];
-        var c = sides[2];
-        
-        var sortedSides = [a, b, c].sort(function(x, y) { return x - y; });
-        var s1 = sortedSides[0];
-        var s2 = sortedSides[1];
-        var s3 = sortedSides[2];
-        
-        var isPythagorean = Math.abs(s1*s1 + s2*s2 - s3*s3) < 0.01;
-        
-        if (isPythagorean) {
-          window.isPythagoreanTriangle = true;
-          window.pythagoreanInfo = 'Este é um TRIÂNGULO RETÂNGULO!\n' +
-                                    'Teorema de Pitágoras: ' + s1 + '² + ' + s2 + '² = ' + s3 + '²\n' +
-                                    (s1*s1).toFixed(2) + ' + ' + (s2*s2).toFixed(2) + ' = ' + (s3*s3).toFixed(2);
-        } else {
-          window.isPythagoreanTriangle = false;
-        }
-      }
-
-      var isValid = true;
-      var html = '';
-
-      if (mode === 'sides' || mode === 'both') {
-        html += '<div class="validation-box"><h4>Validação dos Lados:</h4>';
-        
-        if (n === 3) {
-          var checks = [
-            {valid: sides[0] + sides[1] > sides[2], text: 'L1 + L2 > L3', calc: sides[0] + ' + ' + sides[1] + ' = ' + (sides[0] + sides[1]).toFixed(1) + ' > ' + sides[2]},
-            {valid: sides[0] + sides[2] > sides[1], text: 'L1 + L3 > L2', calc: sides[0] + ' + ' + sides[2] + ' = ' + (sides[0] + sides[2]).toFixed(1) + ' > ' + sides[1]},
-            {valid: sides[1] + sides[2] > sides[0], text: 'L2 + L3 > L1', calc: sides[1] + ' + ' + sides[2] + ' = ' + (sides[1] + sides[2]).toFixed(1) + ' > ' + sides[0]}
-          ];
-          
-          for (var i = 0; i < checks.length; i++) {
-            var c = checks[i];
-            var cls = c.valid ? 'valid' : 'invalid';
-            var icon = c.valid ? '✓' : '✗';
-            html += '<div class="validation-item ' + cls + '">';
-            html += '<span style="font-size: 20px; font-weight: bold;">' + icon + '</span>';
-            html += '<div>';
-            html += '<div style="font-weight: bold;">' + c.text + '</div>';
-            html += '<div style="font-size: 13px; margin-top: 3px;">' + c.calc + '</div>';
-            html += '</div></div>';
-            if (!c.valid) isValid = false;
-          }
-        } else {
-          for (var i = 0; i < n; i++) {
-            var sum = 0;
-            for (var j = 0; j < n; j++) {
-              if (j !== i) sum += sides[j];
-            }
-            var check = sum > sides[i];
-            var cls = check ? 'valid' : 'invalid';
-            var icon = check ? '✓' : '✗';
-            html += '<div class="validation-item ' + cls + '">';
-            html += '<span style="font-size: 20px; font-weight: bold;">' + icon + '</span>';
-            html += '<span>Soma outros > L' + (i+1) + ': ' + sum.toFixed(2) + ' > ' + sides[i].toFixed(2) + '</span></div>';
-            if (!check) isValid = false;
-          }
-        }
-        html += '</div>';
-      }
-
-      if (mode === 'angles' || mode === 'both') {
-        html += '<div class="validation-box"><h4>Validação dos Ângulos:</h4>';
-        var sumAng = 0;
-        for (var i = 0; i < angles.length; i++) {
-          sumAng += angles[i];
-        }
-        var expSum = (n - 2) * 180;
-        var sumValid = Math.abs(sumAng - expSum) < 0.5;
-        
-        html += '<div class="validation-item ' + (sumValid ? 'valid' : 'invalid') + '">';
-        html += '<span style="font-size: 20px; font-weight: bold;">' + (sumValid ? '✓' : '✗') + '</span>';
-        html += '<span>Soma: ' + sumAng.toFixed(1) + '° = ' + expSum + '°</span></div>';
-        html += '</div>';
-        
-        if (!sumValid) isValid = false;
-      }
-
-      if (isValid) {
-        html += '<div style="padding: 15px; background: #d1fae5; border-radius: 10px; margin-top: 15px; text-align: center;">';
-        html += '<strong style="color: #065f46;">✅ Polígono Válido!</strong></div>';
-        
-        if (mode === 'sides') {
-          drawCustomPreview(sides, null, n);
-        } else if (mode === 'angles') {
-          drawCustomPreview(null, angles, n);
-        } else {
-          drawCustomPreview(sides, angles, n);
-        }
-        
-        document.getElementById('customShapePreview').style.display = 'block';
-      } else {
-        html += '<div style="padding: 15px; background: #fee2e2; border-radius: 10px; margin-top: 15px; text-align: center;">';
-        html += '<strong style="color: #991b1b;">❌ Polígono Inválido!</strong><br>';
-        html += '<span style="font-size: 14px;">As condições de existência não foram satisfeitas.</span>';
-        html += '</div>';
-        document.getElementById('customShapePreview').style.display = 'none';
-      }
-
-      document.getElementById('customValidationResults').innerHTML = html;
-    }
-
-    function drawCustomPreview(sides, angles, n) {
-      customPreviewCtx.clearRect(0, 0, customPreviewCanvas.width, customPreviewCanvas.height);
-      customPreviewCtx.fillStyle = '#f9fafb';
-      customPreviewCtx.fillRect(0, 0, customPreviewCanvas.width, customPreviewCanvas.height);
-
-      var verticesArr;
-      if (sides && !angles) {
-        verticesArr = calculateVertices(sides, n);
-      } else if (angles && !sides) {
-        verticesArr = calculateVerticesFromAngles(angles, n);
-        sides = [];
-        for (var i = 0; i < n; i++) {
-          var v1 = verticesArr[i];
-          var v2 = verticesArr[(i + 1) % n];
-          sides.push(Math.hypot(v2.x - v1.x, v2.y - v1.y));
-        }
-      } else {
-        verticesArr = calculateVerticesFromBoth(sides, angles, n);
-      }
-
-      if (!verticesArr) return;
-
-      var bounds = getBounds(verticesArr);
-      var scale = Math.min(
-        (customPreviewCanvas.width - 100) / (bounds.maxX - bounds.minX),
-        (customPreviewCanvas.height - 100) / (bounds.maxY - bounds.minY)
-      );
-
-      var offsetX = customPreviewCanvas.width / 2 - (bounds.maxX + bounds.minX) * scale / 2;
-      var offsetY = customPreviewCanvas.height / 2 - (bounds.maxY + bounds.minY) * scale / 2;
-
-      customPreviewCtx.fillStyle = 'rgba(34, 197, 94, 0.15)';
-      customPreviewCtx.strokeStyle = '#22c55e';
-      customPreviewCtx.lineWidth = 3;
-
-      customPreviewCtx.beginPath();
-      customPreviewCtx.moveTo(verticesArr[0].x * scale + offsetX, verticesArr[0].y * scale + offsetY);
-      for (var i = 1; i < verticesArr.length; i++) {
-        customPreviewCtx.lineTo(verticesArr[i].x * scale + offsetX, verticesArr[i].y * scale + offsetY);
-      }
-      customPreviewCtx.closePath();
-      customPreviewCtx.fill();
-      customPreviewCtx.stroke();
-
-      // desenhar vértices com círculos e numerar
-      for (var i = 0; i < verticesArr.length; i++) {
-        var x = verticesArr[i].x * scale + offsetX;
-        var y = verticesArr[i].y * scale + offsetY;
-        
-        customPreviewCtx.fillStyle = '#22c55e';
-        customPreviewCtx.strokeStyle = 'white';
-        customPreviewCtx.lineWidth = 2;
-        customPreviewCtx.beginPath();
-        customPreviewCtx.arc(x, y, 10, 0, Math.PI * 2);
-        customPreviewCtx.fill();
-        customPreviewCtx.stroke();
-
-        customPreviewCtx.fillStyle = 'white';
-        customPreviewCtx.font = 'bold 12px Arial';
-        customPreviewCtx.textAlign = 'center';
-        customPreviewCtx.textBaseline = 'middle';
-        customPreviewCtx.fillText((i+1).toString(), x, y);
-      }
-
-      // Calcular e desenhar etiquetas dos lados (no ponto médio) e ângulos (perto do vértice)
-      customPreviewCtx.fillStyle = '#111';
-      customPreviewCtx.font = 'bold 13px Arial';
-      customPreviewCtx.textAlign = 'center';
-
-      for (var i = 0; i < verticesArr.length; i++) {
-        var p1 = verticesArr[i];
-        var p2 = verticesArr[(i + 1) % verticesArr.length];
-        var mx = (p1.x + p2.x) / 2 * scale + offsetX;
-        var my = (p1.y + p2.y) / 2 * scale + offsetY;
-        var sideVal = sides && sides[i] ? sides[i] : 0;
-        // fundo branco leve para legibilidade
-        customPreviewCtx.fillStyle = 'rgba(255,255,255,0.8)';
-        customPreviewCtx.fillRect(mx - 30, my - 18, 60, 20);
-        customPreviewCtx.fillStyle = '#111';
-        customPreviewCtx.fillText('L' + (i+1) + '=' + sideVal.toFixed(1) + 'cm', mx, my - 8);
-      }
-
-      if (angles) {
-        for (var i = 0; i < verticesArr.length; i++) {
-          var vx = verticesArr[i].x * scale + offsetX;
-          var vy = verticesArr[i].y * scale + offsetY;
-          var angVal = angles[i] ? angles[i] : calculateAnglesFromVertices(verticesArr, verticesArr.length)[i];
-          // fundo branco leve para legibilidade
-          customPreviewCtx.fillStyle = 'rgba(255,255,255,0.8)';
-          customPreviewCtx.fillRect(vx - 28, vy - 34, 56, 20);
-          customPreviewCtx.fillStyle = '#111';
-          customPreviewCtx.fillText('∠' + (i+1) + '=' + angVal.toFixed(1) + '°', vx, vy - 24);
-        }
-      }
-
-      // Exibir info de perímetro e área no box (mantendo original)
-      var perimeter = 0;
-      for (var i = 0; i < sides.length; i++) perimeter += sides[i];
-
-      var area = 0;
-      for (var i = 0; i < n; i++) {
-        var j = (i + 1) % n;
-        area += verticesArr[i].x * verticesArr[j].y - verticesArr[j].x * verticesArr[i].y;
-      }
-      area = Math.abs(area) / 2;
-
-      var shapes = {3: 'Triângulo', 4: 'Quadrilátero', 5: 'Pentágono', 6: 'Hexágono', 7: 'Heptágono', 8: 'Octógono'};
-      var name = shapes[n] || 'Polígono de ' + n + ' lados';
-
-      var info = '<div style="background: #f3f4f6; padding: 15px; border-radius: 10px;">';
-      info += '<h4>' + name + '</h4>';
-      info += '<p><strong>Lados:</strong> ';
-      for (var i = 0; i < sides.length; i++) {
-        info += 'L' + (i+1) + '=' + sides[i].toFixed(2) + 'cm ';
-      }
-      info += '</p>';
-      if (angles) {
-        info += '<p><strong>Ângulos:</strong> ';
-        for (var i = 0; i < angles.length; i++) {
-          info += '∠' + (i+1) + '=' + angles[i].toFixed(1) + '° ';
-        }
-        info += '</p>';
-      }
-      info += '<p><strong>Perímetro:</strong> ' + perimeter.toFixed(2) + ' cm</p>';
-      info += '<p><strong>Área:</strong> ' + area.toFixed(2) + ' cm²</p>';
-      info += '</div>';
-
-      document.getElementById('customShapeInfo').innerHTML = info;
-    }
-
-    function clearCustom() {
-      document.getElementById('numSides').value = 3;
-      document.getElementById('creationMode').value = 'sides';
-      generateCustomInputs();
-      toggleCreationMode();
-    }
-
-    // Funções auxiliares (mantidas da versão original)
-    function calculateVertices(sides, n) {
-      if (n === 3) {
-        var a = sides[0];
-        var b = sides[1];
-        var c = sides[2];
-        var vertices = [
-          {x: 0, y: 0},
-          {x: c, y: 0}
-        ];
-        var cosB = (a*a + c*c - b*b) / (2*a*c);
-        cosB = Math.max(-1, Math.min(1, cosB));
-        var angleB = Math.acos(cosB);
-        vertices.push({
-          x: a * Math.cos(angleB),
-          y: a * Math.sin(angleB)
+        // Desenha pontos (vértices)
+        pontos.forEach(p => {
+            ctx.fillStyle = 'red';
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+            ctx.fill();
         });
-        return vertices;
-      } else if (n === 4) {
-        var vertices = [];
-        var x = 0;
-        var y = 0;
-        vertices.push({x: x, y: y});
-        x += sides[0];
-        vertices.push({x: x, y: y});
-        var angle = Math.PI / 3;
-        x += sides[1] * Math.cos(angle);
-        y += sides[1] * Math.sin(angle);
-        vertices.push({x: x, y: y});
-        var d = sides[3];
-        var cosTheta = (d*d + sides[0]*sides[0] - sides[2]*sides[2]) / (2*d*sides[0]);
-        cosTheta = Math.max(-1, Math.min(1, cosTheta));
-        var theta = Math.acos(cosTheta);
-        vertices.push({
-          x: d * Math.cos(theta),
-          y: -d * Math.sin(theta)
-        });
-        return vertices;
-      } else {
-        var vertices = [];
-        var angle = 0;
-        var x = 0;
-        var y = 0;
-        vertices.push({x: x, y: y});
-        var angleInc = (2 * Math.PI) / n;
-        for (var i = 0; i < n; i++) {
-          x += sides[i] * Math.cos(angle);
-          y += sides[i] * Math.sin(angle);
-          if (i < n - 1) vertices.push({x: x, y: y});
-          angle += angleInc;
+    }
+
+    function limparCanvas() {
+        pontos = [];
+        ultimaAnalise = null;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        output.innerHTML = "Canvas limpo. [cite: 48]";
+    }
+
+    function analisarPoligono() {
+        if (pontos.length < 3) {
+            alert("Erro: Defina pelo menos 3 pontos para formar um polígono. [cite: 68, 183]");
+            return;
         }
-        return vertices;
-      }
+
+        // Simulação de cálculo de área e perímetro (CRUD/Operação) [cite: 276]
+        const perimetro = pontos.length * 50; // Valor fictício para o exemplo
+        const area = (pontos.length * 100) / 2;
+        
+        ultimaAnalise = {
+            tipo: pontos.length === 3 ? "Triângulo" : pontos.length === 4 ? "Quadrilátero" : "Polígono",
+            perimetro: perimetro,
+            area: area
+        };
+
+        output.innerHTML = `
+            Tipo: ${ultimaAnalise.tipo}<br>
+            Perímetro: ${ultimaAnalise.perimetro} px<br>
+            Área: ${ultimaAnalise.area} px²
+        `;
     }
 
-    function calculateVerticesFromAngles(angles, n) {
-      var vertices = [];
-      var sideLength = 50;
-      var x = 0;
-      var y = 0;
-      var currentAngle = 0;
-      vertices.push({x: x, y: y});
-      for (var i = 0; i < n - 1; i++) {
-        x += sideLength * Math.cos(currentAngle);
-        y += sideLength * Math.sin(currentAngle);
-        vertices.push({x: x, y: y});
-        var externalAngle = (180 - angles[i]) * Math.PI / 180;
-        currentAngle += externalAngle;
-      }
-      return vertices;
-    }
+    // Função de envio por e-mail baseada na sua solicitação
+    function enviarParaProfessor() {
+        if (!ultimaAnalise) {
+            alert("Por favor, realize a 'Análise Geometria' antes de enviar. [cite: 165]");
+            return;
+        }
 
-    function calculateVerticesFromBoth(sides, angles, n) {
-      var vertices = [];
-      var x = 0;
-      var y = 0;
-      var currentAngle = 0;
-      vertices.push({x: x, y: y});
-      for (var i = 0; i < n - 1; i++) {
-        x += sides[i] * Math.cos(currentAngle);
-        y += sides[i] * Math.sin(currentAngle);
-        vertices.push({x: x, y: y});
-        var externalAngle = (180 - angles[i]) * Math.PI / 180;
-        currentAngle += externalAngle;
-      }
-      return vertices;
-    }
+        const emailProfessor = "edilsonduarte@gmail.com"; 
+        const assunto = encodeURIComponent("Resultado de Atividade - Sistema Arquimedes");
+        
+        let corpo = `Olá, Professor.%0D%0A%0D%0A`;
+        corpo += `Aqui está o resultado da minha análise geométrica:%0D%0A`;
+        corpo += `------------------------------------------%0D%0A`;
+        corpo += `Forma: ${ultimaAnalise.tipo}%0D%0A`;
+        corpo += `Área calculada: ${ultimaAnalise.area}%0D%0A`;
+        corpo += `Perímetro: ${ultimaAnalise.perimetro}%0D%0A`;
+        corpo += `------------------------------------------%0D%0A%0D%0A`;
+        corpo += `Atenciosamente,%0D%0AAluno(a).`;
 
-    function getBounds(vertices) {
-      var minX = vertices[0].x;
-      var minY = vertices[0].y;
-      var maxX = vertices[0].x;
-      var maxY = vertices[0].y;
-      
-      for (var i = 1; i < vertices.length; i++) {
-        if (vertices[i].x < minX) minX = vertices[i].x;
-        if (vertices[i].y < minY) minY = vertices[i].y;
-        if (vertices[i].x > maxX) maxX = vertices[i].x;
-        if (vertices[i].y > maxY) maxY = vertices[i].y;
-      }
-      
-      return {minX: minX, minY: minY, maxX: maxX, maxY: maxY};
+        // Instrução final conforme dicas do manual [cite: 80, 156]
+        alert("O seu cliente de e-mail será aberto. Lembre-se de anexar o print do canvas! [cite: 267]");
+        
+        window.location.href = `mailto:${emailProfessor}?subject=${assunto}&body=${corpo}`;
     }
+</script>
 
-    function calculateAnglesFromVertices(vertices, n) {
-      var angles = [];
-      for (var i = 0; i < n; i++) {
-        var v1 = vertices[(i - 1 + n) % n];
-        var v2 = vertices[i];
-        var v3 = vertices[(i + 1) % n];
-        var dx1 = v1.x - v2.x;
-        var dy1 = v1.y - v2.y;
-        var dx2 = v3.x - v2.x;
-        var dy2 = v3.y - v2.y;
-        var dot = dx1 * dx2 + dy1 * dy2;
-        var mag1 = Math.hypot(dx1, dy1);
-        var mag2 = Math.hypot(dx2, dy2);
-        var cosAngle = dot / (mag1 * mag2);
-        cosAngle = Math.max(-1, Math.min(1, cosAngle));
-        var angle = Math.acos(cosAngle) * 180 / Math.PI;
-        angles.push(angle);
-      }
-      return angles;
-    }
-
-    // Init
-    drawCanvas();
-    generateCustomInputs();
-    // removed call to updateShapeInputs (which belonged to removed tab)
-  </script>
 </body>
 </html>
