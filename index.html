@@ -2,202 +2,148 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema Arquimedes - Geometria Interativa</title>
+    <title>Arquimedes - Detector Geométrico Profissional</title>
     <style>
-        /* Requisitos do Sistema: Resolução mínima 1024x768 [cite: 14] */
-        body { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            margin: 0; 
-            background-color: #f4f7f6; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-        }
-        
-        /* Layout do Dashboard [cite: 18, 25] */
-        .container { 
-            width: 90%; 
-            max-width: 1200px; 
-            background: white; 
-            margin: 20px; 
-            padding: 30px; 
-            border-radius: 12px; 
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1); 
-        }
-
-        header { border-bottom: 2px solid #eee; margin-bottom: 20px; padding-bottom: 10px; }
-        
-        /* Canvas de Geometria Interativa [cite: 19, 64] */
-        .canvas-area { position: relative; display: inline-block; width: 100%; text-align: center; }
-        canvas { 
-            border: 2px solid #34495e; 
-            background: #ffffff; 
-            cursor: crosshair; 
-            max-width: 100%; 
-            height: auto;
-            border-radius: 4px;
-        }
-
-        /* Botões e Ações Rápidas [cite: 70, 108] */
-        .controls { margin: 20px 0; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
-        button { 
-            padding: 12px 24px; 
-            font-weight: bold; 
-            border: none; 
-            border-radius: 6px; 
-            cursor: pointer; 
-            transition: all 0.3s; 
-        }
-        .btn-clear { background: #e74c3c; color: white; }
-        .btn-analyze { background: #3498db; color: white; }
-        /* Botão de Envio solicitado */
-        .btn-send { background: #27ae60; color: white; display: flex; align-items: center; gap: 8px; }
-        button:hover { opacity: 0.8; transform: translateY(-2px); }
-
-        /* Painel de Resultados (KPIs) [cite: 30, 31, 294, 295] */
-        .kpi-container { display: flex; gap: 15px; margin-top: 20px; }
-        .kpi-card { 
-            flex: 1; 
-            background: #f8f9fa; 
-            padding: 15px; 
-            border-radius: 8px; 
-            border-top: 4px solid #3498db; 
-            text-align: center; 
-        }
-        .kpi-value { font-size: 1.2em; font-weight: bold; color: #2c3e50; display: block; }
-        .kpi-label { font-size: 0.8em; color: #7f8c8d; text-transform: uppercase; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; background: #f0f2f5; height: 100vh; }
+        #sidebar { width: 300px; background: #2c3e50; color: white; padding: 20px; box-shadow: 2px 0 5px rgba(0,0,0,0.1); }
+        #main { flex: 1; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        .canvas-container { background: white; padding: 10px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); position: relative; }
+        canvas { border: 1px solid #bdc3c7; background: #fff; cursor: crosshair; }
+        .input-group { margin-bottom: 15px; }
+        label { display: block; font-size: 0.8em; color: #bdc3c7; margin-bottom: 5px; }
+        input, select { width: 100%; padding: 8px; border-radius: 4px; border: none; }
+        button { width: 100%; padding: 10px; margin-top: 10px; border-radius: 4px; border: none; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        .btn-build { background: #3498db; color: white; }
+        .btn-email { background: #27ae60; color: white; margin-top: 20px; }
+        .results-box { margin-top: 20px; font-size: 0.9em; line-height: 1.6; border-top: 1px solid #7f8c8d; padding-top: 10px; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <header>
-        <h1>Arquimedes | <small>Geometria Interativa</small></h1>
-        <p>Clique no plano para definir vértices e analisar a forma. [cite: 72, 75]</p>
-    </header>
-
-    <div class="canvas-area">
-        <canvas id="arquimedesCanvas" width="800" height="500"></canvas>
+<div id="sidebar">
+    <h3>⚙️ Configurações [cite: 21]</h3>
+    <div class="input-group">
+        <label>Tipo de Polígono</label>
+        <select id="shapeType">
+            <option value="3">Triângulo</option>
+            <option value="4">Quadrilátero</option>
+            <option value="5">Pentágono</option>
+            <option value="6">Hexágono</option>
+        </select>
+    </div>
+    <div class="input-group">
+        <label>Comprimento do Lado (px)</label>
+        <input type="number" id="sideLength" value="150">
+    </div>
+    <button class="btn-build" onclick="gerarPoligonoRegular()">Criar com Características [cite: 64]</button>
+    
+    <div class="results-box" id="analysisResults">
+        <strong>Resultados[cite: 20]:</strong>
+        <div id="details">Aguardando construção...</div>
     </div>
 
-    <div class="controls">
-        <button class="btn-clear" onclick="limparSistema()">Limpar Tudo</button>
-        <button class="btn-analyze" onclick="processarGeometria()">Analisar Figura</button>
-        <button class="btn-send" onclick="enviarResultadoEmail()">Enviar Resultado ✉️</button>
-    </div>
+    <button class="btn-email" onclick="enviarParaProfessor()">Enviar para o Professor ✉️</button>
+</div>
 
-    <div class="kpi-container">
-        <div class="kpi-card">
-            <span class="kpi-label">Forma</span>
-            <span id="res-forma" class="kpi-value">Nenhuma</span>
-        </div>
-        <div class="kpi-card">
-            <span class="kpi-label">Área</span>
-            <span id="res-area" class="kpi-value">0.00 px²</span>
-        </div>
-        <div class="kpi-card">
-            <span class="kpi-label">Perímetro</span>
-            <span id="res-perim" class="kpi-value">0.00 px</span>
-        </div>
+<div id="main">
+    <h2>Detector Geométrico Arquimedes [cite: 2]</h2>
+    <div class="canvas-container">
+        <canvas id="geoCanvas" width="800" height="600"></canvas>
     </div>
+    <p><small>Dica: Você também pode clicar no canvas para desenho livre. [cite: 28]</small></p>
 </div>
 
 <script>
-    const canvas = document.getElementById('arquimedesCanvas');
+    const canvas = document.getElementById('geoCanvas');
     const ctx = canvas.getContext('2d');
-    let pontos = [];
-    let analiseDados = null;
+    let points = [];
+    let currentShapeData = "";
 
-    // Interação de Clique [cite: 75]
+    // Construção por Características (Polígono Regular)
+    function gerarPoligonoRegular() {
+        points = [];
+        const sides = parseInt(document.getElementById('shapeType').value);
+        const length = parseFloat(document.getElementById('sideLength').value);
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+
+        for (let i = 0; i < sides; i++) {
+            const angle = (i * 2 * Math.PI) / sides;
+            points.push({
+                x: centerX + length * Math.cos(angle),
+                y: centerY + length * Math.sin(angle)
+            });
+        }
+        analisarEletura();
+    }
+
+    // Clique livre (opcional mantido)
     canvas.addEventListener('click', (e) => {
         const rect = canvas.getBoundingClientRect();
-        pontos.push({ x: e.clientX - rect.left, y: e.clientY - rect.top });
-        desenhar();
+        points.push({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+        if(points.length >= 3) analisarEletura();
+        else draw();
     });
 
-    function desenhar() {
+    function draw() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        if (pontos.length === 0) return;
-
+        if (points.length === 0) return;
         ctx.beginPath();
-        ctx.moveTo(pontos[0].x, pontos[0].y);
-        pontos.forEach(p => ctx.lineTo(p.x, p.y));
-        if (pontos.length > 2) ctx.closePath();
-        
+        ctx.moveTo(points[0].x, points[0].y);
+        points.forEach(p => ctx.lineTo(p.x, p.y));
+        ctx.closePath();
         ctx.strokeStyle = '#3498db';
-        ctx.lineWidth = 3;
+        ctx.lineWidth = 2;
         ctx.stroke();
-
-        pontos.forEach(p => {
+        points.forEach(p => {
             ctx.fillStyle = '#e74c3c';
-            ctx.beginPath();
-            ctx.arc(p.x, p.y, 5, 0, Math.PI * 2);
-            ctx.fill();
+            ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, Math.PI*2); ctx.fill();
         });
     }
 
-    function limparSistema() {
-        pontos = [];
-        analiseDados = null;
-        desenhar();
-        document.getElementById('res-forma').innerText = "Nenhuma";
-        document.getElementById('res-area').innerText = "0.00 px²";
-        document.getElementById('res-perim').innerText = "0.00 px";
-        console.log("Canvas Resetado conforme manual. [cite: 48]");
-    }
+    function analisarEletura() {
+        draw();
+        const n = points.length;
+        if (n < 3) return;
 
-    function processarGeometria() {
-        if (pontos.length < 3) {
-            alert("Erro: Verifique se existem dados cadastrados (mínimo 3 pontos). ");
-            return;
+        // Cálculo de Lados e Ângulos Internos
+        let totalPerimetro = 0;
+        let infoLados = "";
+        let infoAngulos = "";
+        const anguloInterno = ((n - 2) * 180) / n; // Para polígonos regulares
+
+        for (let i = 0; i < n; i++) {
+            const p1 = points[i];
+            const p2 = points[(i + 1) % n];
+            const dist = Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
+            totalPerimetro += dist;
+            infoLados += `Lado ${i+1}: ${dist.toFixed(1)}px | `;
         }
 
-        // Simulação de cálculos para KPIs [cite: 295]
-        const area = (pontos.length * 150.5); 
-        const perim = (pontos.length * 60.2);
-        const tipo = pontos.length === 3 ? "Triângulo" : pontos.length === 4 ? "Quadrilátero" : "Polígono";
-
-        analiseDados = { tipo, area, perim };
-
-        // Atualiza interface de Resultados [cite: 102]
-        document.getElementById('res-forma').innerText = tipo;
-        document.getElementById('res-area').innerText = area.toFixed(2) + " px²";
-        document.getElementById('res-perim').innerText = perim.toFixed(2) + " px";
+        currentShapeData = `
+            <b>Forma:</b> ${n} Lados [cite: 61]<br>
+            <b>Ângulos Internos:</b> ${anguloInterno.toFixed(1)}° (aprox)<br>
+            <b>Perímetro:</b> ${totalPerimetro.toFixed(2)}px <br>
+            <b>Lados:</b> ${infoLados}
+        `;
+        document.getElementById('details').innerHTML = currentShapeData;
     }
 
-    // FUNÇÃO SOLICITADA: Envio de Figura e Resultados [cite: 255, 263]
-    function enviarResultadoEmail() {
-        if (!analiseDados) {
-            alert("Ação Requerida: Analise a figura antes de enviar o e-mail. [cite: 165]");
-            return;
-        }
-
-        // 1. Gera imagem da figura (Exportação de dados [cite: 255, 283])
+    function enviarParaProfessor() {
+        if (points.length < 3) { alert("Crie uma figura primeiro! [cite: 47]"); return; }
+        
+        // Exportar imagem (conforme FAQ do manual) [cite: 256]
         const link = document.createElement('a');
-        link.download = `arquimedes_analise_${analiseDados.tipo.toLowerCase()}.png`;
-        link.href = canvas.toDataURL("image/png");
+        link.download = 'analise_arquimedes.png';
+        link.href = canvas.toDataURL();
         link.click();
 
-        // 2. Prepara o E-mail para o Professor Daniel
-        const professorEmail = "edilsonduarte@gmail.com";
-        const subject = encodeURIComponent(`Relatório Arquimedes: ${analiseDados.tipo}`);
+        const email = "edilsonduarte@gmail.com";
+        const subject = encodeURIComponent("Análise Geométrica - Sistema Arquimedes");
+        const body = encodeURIComponent(`Resultados obtidos:\n\n${document.getElementById('details').innerText.replace(/<br>/g, '\n')}\n\nInstrução: Anexe a imagem baixada a este e-mail.`);
         
-        let body = `Olá, Professor.%0D%0A%0D%0A`;
-        body += `Relatório de Geometria Interativa gerado no sistema Arquimedes.%0D%0A`;
-        body += `--------------------------------------------------%0D%0A`;
-        body += `📐 Forma: ${analiseDados.tipo}%0D%0A`;
-        body += `📊 Área: ${analiseDados.area.toFixed(2)} px²%0D%0A`;
-        body += `📏 Perímetro: ${analiseDados.perim.toFixed(2)} px%0D%0A`;
-        body += `--------------------------------------------------%0D%0A%0D%0A`;
-        body += `⚠️ INSTRUÇÃO IMPORTANTE:%0D%0A`;
-        body += `A imagem da figura foi baixada automaticamente. Por favor, anexe o arquivo '${link.download}' a este e-mail antes de enviar. [cite: 89, 303]`;
-
-        // Feedback visual e abertura do e-mail [cite: 69, 183]
-        alert("Passo 1: Imagem salva nos seus downloads.\nPasso 2: O e-mail será aberto agora. Anexe o arquivo baixado!");
-        window.location.href = `mailto:${professorEmail}?subject=${subject}&body=${body}`;
+        window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
     }
 </script>
-
 </body>
 </html>
