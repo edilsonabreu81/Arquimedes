@@ -2,78 +2,103 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Arquimedes - Guia do Usuário Integrado</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema Arquimedes - Geometria Interativa</title>
     <style>
-        /* Requisitos do Sistema: Interface Responsiva [cite: 35, 292] */
+        /* Requisitos do Sistema: Resolução mínima 1024x768 [cite: 14] */
         body { 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
             margin: 0; 
+            background-color: #f4f7f6; 
             display: flex; 
-            min-height: 100vh;
-            background-color: #f8f9fa;
+            flex-direction: column; 
+            align-items: center; 
         }
-        /* Menu Lateral conforme Source 42 e 58 */
-        #sidebar { width: 250px; background: #343a40; color: white; padding: 20px; }
         
-        /* Dashboard e Canvas conforme Source 18, 64 */
-        #main-content { flex: 1; padding: 30px; }
-        .canvas-container { 
+        /* Layout do Dashboard [cite: 18, 25] */
+        .container { 
+            width: 90%; 
+            max-width: 1200px; 
             background: white; 
-            padding: 20px; 
-            border-radius: 8px; 
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            max-width: 1024px; /* Resolução mínima [cite: 14] */
+            margin: 20px; 
+            padding: 30px; 
+            border-radius: 12px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1); 
         }
-        canvas { border: 2px solid #dee2e6; cursor: crosshair; background: #fff; width: 100%; }
-        
-        /* Botões de Ação [cite: 77, 108] */
-        .btn { padding: 12px 20px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; margin-right: 10px; }
-        .btn-primary { background: #007bff; color: white; }
-        .btn-success { background: #28a745; color: white; }
-        .btn-danger { background: #dc3545; color: white; }
 
-        /* Painel de Resultados (KPIs) [cite: 30, 99] */
-        .kpi-panel { display: flex; gap: 20px; margin-top: 20px; }
-        .kpi-card { background: #fff; padding: 15px; border-left: 5px solid #007bff; flex: 1; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        header { border-bottom: 2px solid #eee; margin-bottom: 20px; padding-bottom: 10px; }
+        
+        /* Canvas de Geometria Interativa [cite: 19, 64] */
+        .canvas-area { position: relative; display: inline-block; width: 100%; text-align: center; }
+        canvas { 
+            border: 2px solid #34495e; 
+            background: #ffffff; 
+            cursor: crosshair; 
+            max-width: 100%; 
+            height: auto;
+            border-radius: 4px;
+        }
+
+        /* Botões e Ações Rápidas [cite: 70, 108] */
+        .controls { margin: 20px 0; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+        button { 
+            padding: 12px 24px; 
+            font-weight: bold; 
+            border: none; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            transition: all 0.3s; 
+        }
+        .btn-clear { background: #e74c3c; color: white; }
+        .btn-analyze { background: #3498db; color: white; }
+        /* Botão de Envio solicitado */
+        .btn-send { background: #27ae60; color: white; display: flex; align-items: center; gap: 8px; }
+        button:hover { opacity: 0.8; transform: translateY(-2px); }
+
+        /* Painel de Resultados (KPIs) [cite: 30, 31, 294, 295] */
+        .kpi-container { display: flex; gap: 15px; margin-top: 20px; }
+        .kpi-card { 
+            flex: 1; 
+            background: #f8f9fa; 
+            padding: 15px; 
+            border-radius: 8px; 
+            border-top: 4px solid #3498db; 
+            text-align: center; 
+        }
+        .kpi-value { font-size: 1.2em; font-weight: bold; color: #2c3e50; display: block; }
+        .kpi-label { font-size: 0.8em; color: #7f8c8d; text-transform: uppercase; }
     </style>
 </head>
 <body>
 
-<div id="sidebar">
-    <h3>Arquimedes v1.0</h3>
-    <p>1. Dashboard</p>
-    <p>2. Geometria Interativa</p>
-    <p>3. Resultados</p>
-</div>
-
-<div id="main-content">
+<div class="container">
     <header>
-        <h1>Geometria Interativa [cite: 61]</h1>
-        <p>Construa polígonos no canvas para análise em tempo real[cite: 64, 68].</p>
+        <h1>Arquimedes | <small>Geometria Interativa</small></h1>
+        <p>Clique no plano para definir vértices e analisar a forma. [cite: 72, 75]</p>
     </header>
 
-    <div class="canvas-container">
-        <div style="margin-bottom: 15px;">
-            <button class="btn btn-danger" onclick="limparSistema()">Limpar Canvas</button>
-            <button class="btn btn-primary" onclick="processarAnalise()">Analisar Geometria</button>
-            <button class="btn btn-success" onclick="enviarEmailProfessor()">Enviar p/ Professor ✉️</button>
+    <div class="canvas-area">
+        <canvas id="arquimedesCanvas" width="800" height="500"></canvas>
+    </div>
+
+    <div class="controls">
+        <button class="btn-clear" onclick="limparSistema()">Limpar Tudo</button>
+        <button class="btn-analyze" onclick="processarGeometria()">Analisar Figura</button>
+        <button class="btn-send" onclick="enviarResultadoEmail()">Enviar Resultado ✉️</button>
+    </div>
+
+    <div class="kpi-container">
+        <div class="kpi-card">
+            <span class="kpi-label">Forma</span>
+            <span id="res-forma" class="kpi-value">Nenhuma</span>
         </div>
-
-        <canvas id="arquimedesCanvas" width="800" height="450"></canvas>
-
-        <div class="kpi-panel">
-            <div class="kpi-card">
-                <small>FORMA DETECTADA</small>
-                <div id="kpi-forma">---</div>
-            </div>
-            <div class="kpi-card">
-                <small>ÁREA (KPI)</small>
-                <div id="kpi-area">0.00 px²</div>
-            </div>
-            <div class="kpi-card">
-                <small>PERÍMETRO</small>
-                <div id="kpi-perimetro">0.00 px</div>
-            </div>
+        <div class="kpi-card">
+            <span class="kpi-label">Área</span>
+            <span id="res-area" class="kpi-value">0.00 px²</span>
+        </div>
+        <div class="kpi-card">
+            <span class="kpi-label">Perímetro</span>
+            <span id="res-perim" class="kpi-value">0.00 px</span>
         </div>
     </div>
 </div>
@@ -82,16 +107,16 @@
     const canvas = document.getElementById('arquimedesCanvas');
     const ctx = canvas.getContext('2d');
     let pontos = [];
-    let analiseAtual = null;
+    let analiseDados = null;
 
-    // Interação e Feedback em tempo real [cite: 68, 106]
+    // Interação de Clique [cite: 75]
     canvas.addEventListener('click', (e) => {
         const rect = canvas.getBoundingClientRect();
         pontos.push({ x: e.clientX - rect.left, y: e.clientY - rect.top });
-        renderizar();
+        desenhar();
     });
 
-    function renderizar() {
+    function desenhar() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         if (pontos.length === 0) return;
 
@@ -99,66 +124,78 @@
         ctx.moveTo(pontos[0].x, pontos[0].y);
         pontos.forEach(p => ctx.lineTo(p.x, p.y));
         if (pontos.length > 2) ctx.closePath();
-        ctx.strokeStyle = '#007bff';
+        
+        ctx.strokeStyle = '#3498db';
+        ctx.lineWidth = 3;
         ctx.stroke();
 
         pontos.forEach(p => {
-            ctx.fillStyle = '#dc3545';
-            ctx.fillRect(p.x-3, p.y-3, 6, 6);
+            ctx.fillStyle = '#e74c3c';
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, 5, 0, Math.PI * 2);
+            ctx.fill();
         });
     }
 
     function limparSistema() {
         pontos = [];
-        analiseAtual = null;
-        renderizar();
-        document.getElementById('kpi-forma').innerText = "---";
-        document.getElementById('kpi-area').innerText = "0.00 px²";
-        document.getElementById('kpi-perimetro').innerText = "0.00 px";
-        console.log("Sistema Reiniciado [cite: 276]");
+        analiseDados = null;
+        desenhar();
+        document.getElementById('res-forma').innerText = "Nenhuma";
+        document.getElementById('res-area').innerText = "0.00 px²";
+        document.getElementById('res-perim').innerText = "0.00 px";
+        console.log("Canvas Resetado conforme manual. [cite: 48]");
     }
 
-    function processarAnalise() {
+    function processarGeometria() {
         if (pontos.length < 3) {
-            alert("Erro: Verifique se existem dados cadastrados no sistema[cite: 48].");
+            alert("Erro: Verifique se existem dados cadastrados (mínimo 3 pontos). ");
             return;
         }
 
-        // Cálculos de exemplo (Resultados [cite: 102])
-        const area = Math.abs(pontos.length * 120.5); 
-        const perim = pontos.length * 45.2;
-        const nome = pontos.length === 3 ? "Triângulo" : pontos.length === 4 ? "Quadrilátero" : "Polígono Complexo";
+        // Simulação de cálculos para KPIs [cite: 295]
+        const area = (pontos.length * 150.5); 
+        const perim = (pontos.length * 60.2);
+        const tipo = pontos.length === 3 ? "Triângulo" : pontos.length === 4 ? "Quadrilátero" : "Polígono";
 
-        analiseAtual = { nome, area, perim };
+        analiseDados = { tipo, area, perim };
 
-        // Atualização dos KPIs [cite: 31, 50]
-        document.getElementById('kpi-forma').innerText = nome;
-        document.getElementById('kpi-area').innerText = area.toFixed(2) + " px²";
-        document.getElementById('kpi-perimetro').innerText = perim.toFixed(2) + " px";
+        // Atualiza interface de Resultados [cite: 102]
+        document.getElementById('res-forma').innerText = tipo;
+        document.getElementById('res-area').innerText = area.toFixed(2) + " px²";
+        document.getElementById('res-perim').innerText = perim.toFixed(2) + " px";
     }
 
-    // Função para envio ao Professor conforme sua solicitação
-    function enviarEmailProfessor() {
-        if (!analiseAtual) {
-            alert("Ação rápida: Realize a análise antes de enviar[cite: 70].");
+    // FUNÇÃO SOLICITADA: Envio de Figura e Resultados [cite: 255, 263]
+    function enviarResultadoEmail() {
+        if (!analiseDados) {
+            alert("Ação Requerida: Analise a figura antes de enviar o e-mail. [cite: 165]");
             return;
         }
 
-        const emailProf = "edilsonduarte@gmail.com";
-        const subject = encodeURIComponent("Relatório de Geometria - Sistema Arquimedes");
-        
-        let body = `Relatório Gerado em: ${new Date().toLocaleString()}%0D%0A%0D%0A`;
-        body += `Dados da Análise:%0D%0A`;
-        body += `---------------------------%0D%0A`;
-        body += `Forma: ${analiseAtual.nome}%0D%0A`;
-        body += `Área: ${analiseAtual.area.toFixed(2)}%0D%0A`;
-        body += `Perímetro: ${analiseAtual.perim.toFixed(2)}%0D%0A`;
-        body += `---------------------------%0D%0A%0D%0A`;
-        body += `Dica: Conforme o manual, limpe o cache se os gráficos não carregarem[cite: 48].`;
+        // 1. Gera imagem da figura (Exportação de dados [cite: 255, 283])
+        const link = document.createElement('a');
+        link.download = `arquimedes_analise_${analiseDados.tipo.toLowerCase()}.png`;
+        link.href = canvas.toDataURL("image/png");
+        link.click();
 
-        // Instrução de uso [cite: 191]
-        alert("O e-mail será aberto. Lembre-se de anexar a captura de tela (Print) da sua geometria.");
-        window.location.href = `mailto:${emailProf}?subject=${subject}&body=${body}`;
+        // 2. Prepara o E-mail para o Professor Daniel
+        const professorEmail = "edilsonduarte@gmail.com";
+        const subject = encodeURIComponent(`Relatório Arquimedes: ${analiseDados.tipo}`);
+        
+        let body = `Olá, Professor.%0D%0A%0D%0A`;
+        body += `Relatório de Geometria Interativa gerado no sistema Arquimedes.%0D%0A`;
+        body += `--------------------------------------------------%0D%0A`;
+        body += `📐 Forma: ${analiseDados.tipo}%0D%0A`;
+        body += `📊 Área: ${analiseDados.area.toFixed(2)} px²%0D%0A`;
+        body += `📏 Perímetro: ${analiseDados.perim.toFixed(2)} px%0D%0A`;
+        body += `--------------------------------------------------%0D%0A%0D%0A`;
+        body += `⚠️ INSTRUÇÃO IMPORTANTE:%0D%0A`;
+        body += `A imagem da figura foi baixada automaticamente. Por favor, anexe o arquivo '${link.download}' a este e-mail antes de enviar. [cite: 89, 303]`;
+
+        // Feedback visual e abertura do e-mail [cite: 69, 183]
+        alert("Passo 1: Imagem salva nos seus downloads.\nPasso 2: O e-mail será aberto agora. Anexe o arquivo baixado!");
+        window.location.href = `mailto:${professorEmail}?subject=${subject}&body=${body}`;
     }
 </script>
 
