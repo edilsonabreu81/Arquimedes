@@ -2,409 +2,173 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Detector Geométrico Arquimedes</title>
+    <title>Detector Geométrico Arquimedes - Oficial</title>
     <style>
-        :root {
-            --primary: #667eea;
-            --secondary: #764ba2;
-            --success: #22c55e;
-            --danger: #ef4444;
-            --dark: #2d3748;
-            --light: #f8fafc;
-        }
-
-        body {
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            margin: 0;
-            display: flex;
-            justify-content: center;
-            padding: 20px;
-            color: var(--dark);
-        }
-
-        .container {
-            background: white;
-            width: 100%;
-            max-width: 1100px;
-            border-radius: 15px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-        }
-
-        header {
-            background: var(--dark);
-            color: white;
-            padding: 15px 25px;
-            text-align: center;
-        }
-
-        /* Sistema de Abas */
-        .tabs {
-            display: flex;
-            background: #edf2f7;
-            border-bottom: 2px solid #e2e8f0;
-        }
-
-        .tab {
-            flex: 1;
-            padding: 15px;
-            border: none;
-            cursor: pointer;
-            font-weight: bold;
-            color: #4a5568;
-            transition: 0.3s;
-        }
-
-        .tab.active {
-            background: white;
-            color: var(--primary);
-            border-bottom: 3px solid var(--primary);
-        }
-
-        /* Layout Principal */
-        .main-layout {
-            display: grid;
-            grid-template-columns: 1fr 320px;
-            gap: 20px;
-            padding: 20px;
-        }
-
-        .canvas-container {
-            position: relative;
-            background: #fff;
-            border: 2px solid #cbd5e0;
-            border-radius: 8px;
-            overflow: hidden;
-            cursor: crosshair;
-        }
-
-        canvas { display: block; max-width: 100%; }
-
-        /* Painel de Controle */
-        .panel {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .card {
-            background: var(--light);
-            padding: 15px;
-            border-radius: 8px;
-            border-left: 5px solid var(--primary);
-        }
-
-        .btn {
-            padding: 10px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: 0.2s;
-            color: white;
-            text-align: center;
-            text-decoration: none;
-        }
-
+        :root { --primary: #667eea; --dark: #2d3748; --success: #22c55e; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; margin: 0; display: flex; flex-direction: column; align-items: center; }
+        .container { width: 95%; max-width: 1100px; background: white; margin: 20px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); overflow: hidden; }
+        header { background: var(--dark); color: white; padding: 15px; text-align: center; }
+        
+        .tabs { display: flex; background: #edf2f7; }
+        .tab { flex: 1; padding: 15px; border: none; cursor: pointer; font-weight: bold; }
+        .tab.active { background: white; color: var(--primary); border-bottom: 3px solid var(--primary); }
+        
+        .main-layout { display: grid; grid-template-columns: 1fr 300px; gap: 20px; padding: 20px; }
+        canvas { border: 2px solid #cbd5e0; background: #fff; cursor: crosshair; max-width: 100%; height: auto; }
+        
+        .panel { display: flex; flex-direction: column; gap: 15px; }
+        .card { background: #f8fafc; padding: 15px; border-radius: 8px; border-left: 5px solid var(--primary); font-size: 0.9em; }
+        .btn { padding: 10px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; color: white; text-align: center; margin-bottom: 5px; }
         .btn-blue { background: var(--primary); }
         .btn-green { background: var(--success); }
-        .btn-red { background: var(--danger); }
-        .btn:hover { opacity: 0.9; transform: translateY(-1px); }
-
-        .results { font-size: 0.9rem; line-height: 1.4; }
-        .results b { color: var(--secondary); }
-
-        .hidden { display: none; }
-
-        input[type="file"] { display: none; }
+        .btn-red { background: #ef4444; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <header>
-        <h1>🔍 Detector Geométrico Arquimedes</h1>
-    </header>
+    <header><h1>🔍 Detector Geométrico Arquimedes</h1></header>
 
     <div class="tabs">
-        <button class="tab active" onclick="switchMode('image')">🖼️ Aba 1: Análise por Imagem</button>
-        <button class="tab" onclick="switchMode('manual')">✍️ Aba 2: Construção Manual</button>
+        <button id="tab1" class="tab active" onclick="setMode('image')">🖼️ Aba 1: Análise por Imagem</button>
+        <button id="tab2" class="tab" onclick="setMode('manual')">✍️ Aba 2: Construção Manual</button>
     </div>
 
     <div class="main-layout">
-        <div class="canvas-area">
-            <div class="canvas-container" id="container">
-                <canvas id="mainCanvas" width="750" height="500"></canvas>
-            </div>
-            
-            <div class="controls" style="margin-top: 15px; display: flex; gap: 10px;">
-                <label class="btn btn-blue" id="uploadLabel">
-                    📁 Carregar Imagem
-                    <input type="file" id="imageInput" accept="image/*">
-                </label>
-                <button class="btn btn-blue" id="btnScale" onclick="startScaling()">📏 Definir Escala</button>
-                <button class="btn btn-blue" onclick="clearCanvas()">🗑️ Limpar</button>
-                <button class="btn btn-green" onclick="downloadImage()">💾 Baixar Resultado</button>
+        <div>
+            <canvas id="canvas" width="750" height="500"></canvas>
+            <div style="margin-top:10px; display:flex; gap:10px;">
+                <input type="file" id="imgInput" style="display:none" accept="image/*">
+                <button class="btn btn-blue" id="btnLoad" onclick="document.getElementById('imgInput').click()">📁 Carregar Imagem</button>
+                <button class="btn btn-blue" onclick="definirEscala()">📏 Definir Escala</button>
+                <button class="btn btn-red" onclick="resetar()">🗑️ Limpar</button>
             </div>
         </div>
 
         <aside class="panel">
             <div class="card">
-                <h3>📊 Resultados (KPIs)</h3>
-                <div id="resultText" class="results">
-                    Aguardando marcação de pontos...
-                </div>
+                <strong>📊 KPIs de Análise [cite: 30]</strong>
+                <div id="results">Aguardando vértices...</div>
             </div>
-
             <div class="card">
-                <h3>⚙️ Escala Real</h3>
-                <div id="scaleInfo">
-                    Escala: 1px = 1 unidade
-                </div>
+                <strong>📏 Escala Real [cite: 13]</strong>
+                <div id="scaleTxt">1px = 1.00 unidade</div>
             </div>
-
-            <button class="btn btn-green" style="margin-top: auto;" onclick="sendEmail()">📧 Enviar ao Professor</button>
+            <button class="btn btn-green" onclick="baixarImg()">💾 Baixar Resultado [cite: 256]</button>
+            <button class="btn btn-green" onclick="enviarEmail()">📧 Enviar Professor [cite: 191]</button>
         </aside>
     </div>
 </div>
 
 <script>
-    /** * MÓDULO 1: ESTADO E CONFIGURAÇÃO
-     */
-    const canvas = document.getElementById('mainCanvas');
+    const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
-    const imageInput = document.getElementById('imageInput');
-    
-    let state = {
-        mode: 'image', // 'image' ou 'manual'
-        points: [],
-        bgImage: null,
-        isScaling: false,
-        scalePoints: [],
-        pixelsPerUnit: 1,
-        analysis: null,
-        gridSize: 25
-    };
+    let state = { mode: 'image', points: [], bg: null, pixelsPerUnit: 1, scaleMode: false, scalePts: [] };
 
-    /** * MÓDULO 2: GEOMETRIA E CÁLCULOS
-     */
-    const Geometry = {
-        getDistance: (p1, p2) => Math.sqrt((p2.x - p1.x)**2 + (p2.y - p1.y)**2),
-
-        getArea: (pts) => {
-            let area = 0;
-            for (let i = 0; i < pts.length; i++) {
-                let j = (i + 1) % pts.length;
-                area += pts[i].x * pts[j].y;
-                area -= pts[j].x * pts[i].y;
-            }
-            return Math.abs(area) / 2;
-        },
-
-        getAngle: (p1, p2, p3) => {
-            const v1 = { x: p1.x - p2.x, y: p1.y - p2.y };
-            const v2 = { x: p3.x - p2.x, y: p3.y - p2.y };
-            const dot = v1.x * v2.x + v1.y * v2.y;
-            const mag = Math.sqrt(v1.x**2 + v1.y**2) * Math.sqrt(v2.x**2 + v2.y**2);
-            return Math.acos(dot / mag) * (180 / Math.PI);
-        },
-
-        analyze: (pts, scale) => {
-            if (pts.length < 3) return null;
-            
-            const n = pts.length;
-            const sides = [];
-            const angles = [];
-
-            for (let i = 0; i < n; i++) {
-                sides.push(Geometry.getDistance(pts[i], pts[(i + 1) % n]) / scale);
-                const prev = pts[(i - 1 + n) % n];
-                const next = pts[(i + 1) % n];
-                angles.push(Geometry.getAngle(prev, pts[i], next));
-            }
-
-            const perimeter = sides.reduce((a, b) => a + b, 0);
-            const area = Geometry.getArea(pts) / (scale ** 2);
-            const sumAngles = (n - 2) * 180;
-
-            let type = n === 3 ? "Triângulo" : n === 4 ? "Quadrilátero" : `Polígono (${n} lados)`;
-            let subType = "";
-
-            if (n === 3) {
-                const s = [...sides].sort((a,b) => a-b);
-                if (Math.abs(s[0]-s[2]) < 0.1) subType = "Equilátero";
-                else if (Math.abs(s[0]-s[1]) < 0.1 || Math.abs(s[1]-s[2]) < 0.1) subType = "Isósceles";
-                else subType = "Escaleno";
-                
-                if (angles.some(a => Math.abs(a-90) < 1)) subType += " Retângulo";
-            }
-
-            return { n, sides, angles, perimeter, area, sumAngles, type, subType };
-        }
-    };
-
-    /** * MÓDULO 3: RENDERIZAÇÃO (CANVAS)
-     */
-    function render() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        // 1. Desenhar Malha (Fundo)
-        ctx.strokeStyle = "#e2e8f0";
-        ctx.lineWidth = 1;
-        for(let x=0; x<canvas.width; x+=state.gridSize) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,canvas.height); ctx.stroke(); }
-        for(let y=0; y<canvas.height; y+=state.gridSize) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(canvas.width,y); ctx.stroke(); }
-
-        // 2. Desenhar Imagem de Fundo (Modo Imagem)
-        if (state.mode === 'image' && state.bgImage) {
-            ctx.drawImage(state.bgImage, 0, 0, canvas.width, canvas.height);
-        }
-
-        // 3. Desenhar Polígono
-        if (state.points.length > 0) {
-            ctx.beginPath();
-            ctx.moveTo(state.points[0].x, state.points[0].y);
-            state.points.forEach(p => ctx.lineTo(p.x, p.y));
-            if (state.points.length > 2) ctx.closePath();
-            ctx.strokeStyle = varColor('--primary');
-            ctx.lineWidth = 3;
-            ctx.stroke();
-            ctx.fillStyle = "rgba(102, 126, 234, 0.2)";
-            ctx.fill();
-
-            // Vértices
-            state.points.forEach((p, i) => {
-                ctx.fillStyle = varColor('--danger');
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, 5, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.fillStyle = "black";
-                ctx.fillText(`V${i+1}`, p.x + 8, p.y - 8);
-            });
-        }
-
-        // 4. Modo Escala
-        if (state.isScaling) {
-            ctx.fillStyle = "rgba(239, 68, 68, 0.5)";
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            state.scalePoints.forEach(p => {
-                ctx.fillStyle = "yellow";
-                ctx.beginPath(); ctx.arc(p.x, p.y, 6, 0, Math.PI*2); ctx.fill();
-            });
-        }
-
-        updateUI();
+    // Troca de Abas [cite: 17, 18, 19]
+    function setMode(m) {
+        state.mode = m;
+        state.points = [];
+        state.bg = null;
+        document.getElementById('tab1').className = m==='image' ? 'tab active' : 'tab';
+        document.getElementById('tab2').className = m==='manual' ? 'tab active' : 'tab';
+        document.getElementById('btnLoad').style.display = m==='image' ? 'block' : 'none';
+        resetar();
     }
 
-    /** * MÓDULO 4: INTERFACE E EVENTOS
-     */
-    function updateUI() {
-        const resultDiv = document.getElementById('resultText');
-        const res = Geometry.analyze(state.points, state.pixelsPerUnit);
-        state.analysis = res;
+    // Carregar Imagem [cite: 6, 64]
+    document.getElementById('imgInput').onchange = (e) => {
+        const reader = new FileReader();
+        reader.onload = (f) => {
+            const img = new Image();
+            img.onload = () => { state.bg = img; render(); };
+            img.src = f.target.result;
+        };
+        reader.readAsDataURL(e.target.files[0]);
+    };
 
-        if (!res) {
-            resultDiv.innerHTML = "Clique no canvas para marcar os vértices.";
-            return;
-        }
-
-        resultDiv.innerHTML = `
-            <b>Figura:</b> ${res.type} ${res.subType}<br>
-            <b>Lados:</b> ${res.n}<br>
-            <b>Perímetro:</b> ${res.perimeter.toFixed(2)} un<br>
-            <b>Área:</b> ${res.area.toFixed(2)} un²<br>
-            <hr>
-            <b>Medidas Lados:</b><br> ${res.sides.map(s => s.toFixed(1)).join(' | ')}<br>
-            <b>Ângulos Internos:</b><br> ${res.angles.map(a => a.toFixed(1) + '°').join(' | ')}<br>
-            <b>Soma Ângulos:</b> ${res.sumAngles}°
-        `;
-    }
-
-    canvas.addEventListener('mousedown', (e) => {
+    canvas.onclick = (e) => {
         const rect = canvas.getBoundingClientRect();
         const p = { x: e.clientX - rect.left, y: e.clientY - rect.top };
 
-        if (state.isScaling) {
-            state.scalePoints.push(p);
-            if (state.scalePoints.length === 2) {
-                const distPx = Geometry.getDistance(state.scalePoints[0], state.scalePoints[1]);
-                const realVal = prompt("Informe o valor real da escala (ex: 10):", "10");
-                if (realVal) {
-                    state.pixelsPerUnit = distPx / parseFloat(realVal);
-                    document.getElementById('scaleInfo').innerHTML = `Escala: ${state.pixelsPerUnit.toFixed(2)} px = 1 un`;
-                }
-                state.isScaling = false;
-                state.scalePoints = [];
+        if (state.scaleMode) {
+            state.scalePts.push(p);
+            if (state.scalePts.length === 2) {
+                let real = prompt("Valor real da escala (ex: 10cm):", "10");
+                if (real) state.pixelsPerUnit = Math.sqrt((state.scalePts[1].x-state.scalePts[0].x)**2 + (state.scalePts[1].y-state.scalePts[0].y)**2) / parseFloat(real);
+                state.scaleMode = false;
+                document.getElementById('scaleTxt').innerText = `1un = ${state.pixelsPerUnit.toFixed(2)}px`;
             }
         } else {
             state.points.push(p);
         }
         render();
-    });
+    };
 
-    imageInput.addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        const reader = new FileReader();
-        reader.onload = (f) => {
-            const img = new Image();
-            img.onload = () => {
-                state.bgImage = img;
-                render();
-            };
-            img.src = f.target.result;
-        };
-        reader.readAsDataURL(file);
-    });
+    function render() {
+        ctx.clearRect(0,0,750,500);
+        // Malha quadriculada [cite: 14]
+        ctx.strokeStyle = "#eee";
+        for(let i=0; i<750; i+=25) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,500); ctx.stroke(); }
+        for(let j=0; j<500; j+=25) { ctx.beginPath(); ctx.moveTo(0,j); ctx.lineTo(750,j); ctx.stroke(); }
 
-    function switchMode(m) {
-        state.mode = m;
-        state.points = [];
-        state.bgImage = null;
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        event.target.classList.add('active');
-        document.getElementById('uploadLabel').style.display = m === 'image' ? 'block' : 'none';
-        document.getElementById('btnScale').style.display = m === 'image' ? 'block' : 'none';
-        render();
+        if (state.bg) ctx.drawImage(state.bg, 0, 0, 750, 500);
+
+        if (state.points.length > 0) {
+            ctx.beginPath(); ctx.moveTo(state.points[0].x, state.points[0].y);
+            state.points.forEach(p => ctx.lineTo(p.x, p.y));
+            if (state.points.length > 2) ctx.closePath();
+            ctx.strokeStyle = "#667eea"; ctx.lineWidth = 3; ctx.stroke();
+            state.points.forEach((p, i) => {
+                ctx.fillStyle = "red"; ctx.beginPath(); ctx.arc(p.x,p.y,5,0,7); ctx.fill();
+                ctx.fillStyle = "black"; ctx.fillText("V"+(i+1), p.x+7, p.y-7);
+            });
+        }
+        analisar();
     }
 
-    function clearCanvas() { state.points = []; state.bgImage = null; render(); }
-
-    function startScaling() {
-        state.isScaling = true;
-        state.scalePoints = [];
-        alert("Clique em dois pontos da imagem para definir a escala.");
-        render();
-    }
-
-    function downloadImage() {
-        const link = document.createElement('a');
-        link.download = 'analise-arquimedes.png';
-        link.href = canvas.toDataURL();
-        link.click();
-    }
-
-    function sendEmail() {
-        if (!state.analysis) return alert("Crie um polígono primeiro!");
-        const a = state.analysis;
-        const body = `Resultado Geométrico - Sistema Arquimedes%0D%0A%0D%0A` +
-            `Figura: ${a.type} ${a.subType}%0D%0A` +
-            `Lados: ${a.n}%0D%0A` +
-            `Perímetro: ${a.perimeter.toFixed(2)} un%0D%0A` +
-            `Área: ${a.area.toFixed(2)} un²%0D%0A` +
-            `Medidas Lados: ${a.sides.map(s => s.toFixed(1)).join(', ')}%0D%0A` +
-            `Ângulos: ${a.angles.map(ang => ang.toFixed(1) + '°').join(', ')}`;
+    function analisar() {
+        const pts = state.points;
+        if (pts.length < 3) return;
         
-        window.location.href = `mailto:professor@email.com?subject=Relatório Geométrico - Arquimedes&body=${body}`;
+        let perim = 0, lados = [], angulos = [];
+        for (let i=0; i<pts.length; i++) {
+            let p1 = pts[i], p2 = pts[(i+1)%pts.length], p0 = pts[(i-1+pts.length)%pts.length];
+            let d = Math.sqrt((p2.x-p1.x)**2 + (p2.y-p1.y)**2) / state.pixelsPerUnit;
+            lados.push(d); perim += d;
+
+            // Ângulo (Produto Escalar) 
+            let v1 = {x: p0.x-p1.x, y: p0.y-p1.y}, v2 = {x: p2.x-p1.x, y: p2.y-p1.y};
+            let ang = Math.acos((v1.x*v2.x + v1.y*v2.y) / (Math.sqrt(v1.x**2+v1.y**2)*Math.sqrt(v2.x**2+v2.y**2))) * 180 / Math.PI;
+            angulos.push(ang);
+        }
+
+        let area = 0; // Shoelace Formula [cite: 276]
+        for (let i=0; i<pts.length; i++) area += (pts[i].x * pts[(i+1)%pts.length].y) - (pts[(i+1)%pts.length].x * pts[i].y);
+        area = Math.abs(area) / (2 * (state.pixelsPerUnit**2));
+
+        let tipo = pts.length === 3 ? "Triângulo" : pts.length === 4 ? "Quadrilátero" : "Polígono "+pts.length+"L";
+        
+        document.getElementById('results').innerHTML = `
+            <b>${tipo}</b><br>Lados: ${lados.map(l=>l.toFixed(1)).join(' | ')}<br>
+            Ângulos: ${angulos.map(a=>a.toFixed(0)+'°').join(' | ')}<br>
+            Perímetro: ${perim.toFixed(2)}un<br>Área: ${area.toFixed(2)}un²
+        `;
+        state.lastData = {tipo, perim, area, lados, angulos};
     }
 
-    function varColor(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+    function enviarEmail() {
+        const d = state.lastData;
+        if(!d) return alert("Analise a figura primeiro!");
+        const body = `Figura: ${d.tipo}%0D%0AÁrea: ${d.area.toFixed(2)}%0D%0APerímetro: ${d.perim.toFixed(2)}%0D%0ALados: ${d.lados.map(l=>l.toFixed(1))}%0D%0AÂngulos: ${d.angulos.map(a=>a.toFixed(0))}`;
+        window.location.href = `mailto:edilsonduarte@gmail.com?subject=Resultado Arquimedes&body=${body}`;
+    }
 
-    // Init
+    function resetar() { state.points = []; state.bg = null; render(); document.getElementById('results').innerHTML = "Limpado."; }
+    function definirEscala() { state.scaleMode = true; state.scalePts = []; alert("Clique em 2 pontos na imagem para escala."); }
+    function baixarImg() { const l = document.createElement('a'); l.download = 'arquimedes.png'; l.href = canvas.toDataURL(); l.click(); }
+
     render();
 </script>
-
 </body>
 </html>
