@@ -1,1646 +1,2055 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Detector Geométrico Arquimedes</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --bg: #0a0e1a;
-    --surface: #111827;
-    --surface2: #1a2235;
-    --surface3: #232f45;
-    --border: #2a3a55;
-    --accent: #00d4aa;
-    --accent2: #4f8eff;
-    --accent3: #ff6b6b;
-    --accent4: #ffd166;
-    --text: #e8edf5;
-    --text2: #8a9bb5;
-    --text3: #5a6b80;
-    --grid: rgba(79,142,255,0.06);
-    --grid-strong: rgba(79,142,255,0.12);
-    --success: #22c55e;
-    --warning: #f59e0b;
-    --radius: 12px;
-    --radius-sm: 8px;
-  }
-
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  body {
-    font-family: 'Syne', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    overflow-x: hidden;
-  }
-
-  /* ── BACKGROUND MESH ── */
-  body::before {
-    content: '';
-    position: fixed; inset: 0; z-index: 0;
-    background:
-      radial-gradient(ellipse 80% 60% at 10% 10%, rgba(0,212,170,0.07) 0%, transparent 60%),
-      radial-gradient(ellipse 60% 80% at 90% 90%, rgba(79,142,255,0.07) 0%, transparent 60%),
-      radial-gradient(ellipse 50% 50% at 50% 50%, rgba(255,107,107,0.03) 0%, transparent 70%);
-    pointer-events: none;
-  }
-
-  /* ── HEADER ── */
-  header {
-    position: relative; z-index: 10;
-    display: flex; align-items: center; gap: 16px;
-    padding: 20px 32px;
-    border-bottom: 1px solid var(--border);
-    background: rgba(10,14,26,0.8);
-    backdrop-filter: blur(12px);
-  }
-
-  .logo-icon {
-    width: 44px; height: 44px;
-    background: linear-gradient(135deg, var(--accent), var(--accent2));
-    border-radius: 10px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 22px;
-    box-shadow: 0 0 20px rgba(0,212,170,0.3);
-  }
-
-  .logo-text h1 {
-    font-size: 20px; font-weight: 800;
-    background: linear-gradient(90deg, var(--accent), var(--accent2));
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-    line-height: 1.1;
-  }
-
-  .logo-text p {
-    font-size: 11px; color: var(--text3);
-    font-family: 'JetBrains Mono', monospace;
-    letter-spacing: 0.1em; text-transform: uppercase;
-  }
-
-  .header-badge {
-    margin-left: auto;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    padding: 6px 14px;
-    font-size: 11px;
-    color: var(--accent);
-    font-family: 'JetBrains Mono', monospace;
-  }
-
-  /* ── MAIN LAYOUT ── */
-  .app {
-    position: relative; z-index: 1;
-    display: grid;
-    grid-template-columns: 340px 1fr;
-    grid-template-rows: auto 1fr;
-    gap: 0;
-    height: calc(100vh - 85px);
-  }
-
-  /* ── TABS ── */
-  .tab-nav {
-    grid-column: 1 / -1;
-    display: flex;
-    gap: 2px;
-    padding: 16px 24px 0;
-    border-bottom: 1px solid var(--border);
-    background: rgba(10,14,26,0.6);
-  }
-
-  .tab-btn {
-    position: relative;
-    padding: 10px 22px;
-    border: none; background: transparent;
-    color: var(--text2);
-    font-family: 'Syne', sans-serif;
-    font-size: 13px; font-weight: 600;
-    cursor: pointer;
-    border-radius: var(--radius-sm) var(--radius-sm) 0 0;
-    transition: all 0.2s;
-    display: flex; align-items: center; gap: 8px;
-  }
-
-  .tab-btn:hover { color: var(--text); background: var(--surface2); }
-
-  .tab-btn.active {
-    color: var(--text);
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-bottom: 1px solid var(--surface2);
-    margin-bottom: -1px;
-  }
-
-  .tab-btn.active::after {
-    content: '';
-    position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
-    width: 60%; height: 2px;
-    background: linear-gradient(90deg, var(--accent), var(--accent2));
-    border-radius: 2px 2px 0 0;
-  }
-
-  .tab-dot {
-    width: 7px; height: 7px;
-    border-radius: 50%;
-    background: var(--text3);
-    transition: background 0.2s;
-  }
-
-  .tab-btn.active .tab-dot { background: var(--accent); box-shadow: 0 0 6px var(--accent); }
-
-  /* ── PANELS ── */
-  .panel-left {
-    background: var(--surface);
-    border-right: 1px solid var(--border);
-    overflow-y: auto;
-    padding: 20px;
-    display: flex; flex-direction: column; gap: 16px;
-  }
-
-  .panel-canvas {
-    background: var(--bg);
-    display: flex; flex-direction: column;
-    overflow: hidden;
-  }
-
-  /* ── SECTION CARDS ── */
-  .card {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    overflow: hidden;
-  }
-
-  .card-header {
-    padding: 12px 16px;
-    border-bottom: 1px solid var(--border);
-    display: flex; align-items: center; gap: 10px;
-    font-size: 12px; font-weight: 700;
-    text-transform: uppercase; letter-spacing: 0.08em;
-    color: var(--text2);
-  }
-
-  .card-header-icon {
-    width: 22px; height: 22px;
-    border-radius: 6px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 12px;
-  }
-
-  .card-body { padding: 14px 16px; }
-
-  /* ── BUTTONS ── */
-  .btn {
-    display: flex; align-items: center; justify-content: center; gap: 8px;
-    padding: 10px 16px;
-    border-radius: var(--radius-sm);
-    border: none; cursor: pointer;
-    font-family: 'Syne', sans-serif;
-    font-size: 13px; font-weight: 600;
-    transition: all 0.18s;
-    width: 100%;
-    position: relative; overflow: hidden;
-  }
-
-  .btn::after {
-    content: '';
-    position: absolute; inset: 0;
-    background: rgba(255,255,255,0);
-    transition: background 0.15s;
-  }
-
-  .btn:hover::after { background: rgba(255,255,255,0.07); }
-  .btn:active { transform: scale(0.97); }
-
-  .btn-primary {
-    background: linear-gradient(135deg, var(--accent), var(--accent2));
-    color: #000;
-    box-shadow: 0 4px 15px rgba(0,212,170,0.25);
-  }
-
-  .btn-secondary {
-    background: var(--surface3);
-    color: var(--text);
-    border: 1px solid var(--border);
-  }
-
-  .btn-accent2 {
-    background: linear-gradient(135deg, var(--accent2), #7b61ff);
-    color: #fff;
-    box-shadow: 0 4px 15px rgba(79,142,255,0.25);
-  }
-
-  .btn-danger {
-    background: linear-gradient(135deg, var(--accent3), #ff4040);
-    color: #fff;
-    box-shadow: 0 4px 12px rgba(255,107,107,0.25);
-  }
-
-  .btn-warning {
-    background: linear-gradient(135deg, var(--accent4), #f59e0b);
-    color: #000;
-  }
-
-  .btn-success {
-    background: linear-gradient(135deg, var(--success), #16a34a);
-    color: #fff;
-  }
-
-  .btn-sm { padding: 7px 12px; font-size: 12px; }
-  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
-
-  .btn-row { display: flex; gap: 8px; }
-  .btn-row .btn { flex: 1; }
-
-  /* ── INPUTS ── */
-  .input-group {
-    display: flex; flex-direction: column; gap: 6px;
-  }
-
-  .input-label {
-    font-size: 11px; font-weight: 600;
-    color: var(--text3);
-    text-transform: uppercase; letter-spacing: 0.07em;
-  }
-
-  .input-field {
-    background: var(--surface3);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    padding: 9px 12px;
-    color: var(--text);
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 13px;
-    transition: border-color 0.2s;
-    width: 100%;
-  }
-
-  .input-field:focus { outline: none; border-color: var(--accent); }
-
-  .input-row { display: flex; gap: 8px; }
-  .input-row .input-group { flex: 1; }
-
-  /* ── STATUS BAR ── */
-  .status-bar {
-    padding: 8px 16px;
-    border-radius: var(--radius-sm);
-    font-size: 12px;
-    font-family: 'JetBrains Mono', monospace;
-    display: flex; align-items: center; gap: 8px;
-    transition: all 0.3s;
-  }
-
-  .status-idle { background: var(--surface3); color: var(--text2); border: 1px solid var(--border); }
-  .status-active { background: rgba(0,212,170,0.1); color: var(--accent); border: 1px solid rgba(0,212,170,0.3); }
-  .status-warn { background: rgba(245,158,11,0.1); color: var(--warning); border: 1px solid rgba(245,158,11,0.3); }
-  .status-error { background: rgba(255,107,107,0.1); color: var(--accent3); border: 1px solid rgba(255,107,107,0.3); }
-
-  .status-dot {
-    width: 6px; height: 6px;
-    border-radius: 50%;
-    background: currentColor;
-    flex-shrink: 0;
-  }
-
-  .status-dot.pulse {
-    animation: pulse 1.5s infinite;
-  }
-
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.3; }
-  }
-
-  /* ── RESULTS PANEL ── */
-  .result-item {
-    display: flex; justify-content: space-between; align-items: baseline;
-    padding: 8px 0;
-    border-bottom: 1px solid var(--border);
-    gap: 12px;
-  }
-
-  .result-item:last-child { border-bottom: none; }
-
-  .result-label {
-    font-size: 12px; color: var(--text2);
-    font-family: 'JetBrains Mono', monospace;
-    flex-shrink: 0;
-  }
-
-  .result-value {
-    font-size: 13px; font-weight: 600;
-    color: var(--text);
-    text-align: right;
-    word-break: break-all;
-  }
-
-  .result-value.highlight {
-    color: var(--accent);
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 14px;
-  }
-
-  .result-value.highlight2 { color: var(--accent2); font-family: 'JetBrains Mono', monospace; }
-  .result-value.highlight3 { color: var(--accent4); font-family: 'JetBrains Mono', monospace; }
-
-  .figure-badge {
-    text-align: center;
-    padding: 14px;
-    background: linear-gradient(135deg, rgba(0,212,170,0.1), rgba(79,142,255,0.1));
-    border: 1px solid rgba(0,212,170,0.25);
-    border-radius: var(--radius);
-    margin-bottom: 12px;
-  }
-
-  .figure-badge .name {
-    font-size: 22px; font-weight: 800;
-    background: linear-gradient(90deg, var(--accent), var(--accent2));
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-  }
-
-  .figure-badge .sub {
-    font-size: 12px; color: var(--text2);
-    font-family: 'JetBrains Mono', monospace;
-    margin-top: 4px;
-  }
-
-  .tag-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-
-  .tag {
-    padding: 3px 10px;
-    border-radius: 20px;
-    font-size: 11px; font-weight: 600;
-    font-family: 'JetBrains Mono', monospace;
-  }
-
-  .tag-green { background: rgba(34,197,94,0.15); color: var(--success); border: 1px solid rgba(34,197,94,0.3); }
-  .tag-blue { background: rgba(79,142,255,0.15); color: var(--accent2); border: 1px solid rgba(79,142,255,0.3); }
-  .tag-yellow { background: rgba(255,209,102,0.15); color: var(--accent4); border: 1px solid rgba(255,209,102,0.3); }
-  .tag-red { background: rgba(255,107,107,0.15); color: var(--accent3); border: 1px solid rgba(255,107,107,0.3); }
-  .tag-cyan { background: rgba(0,212,170,0.15); color: var(--accent); border: 1px solid rgba(0,212,170,0.3); }
-
-  /* ── CANVAS AREA ── */
-  .canvas-toolbar {
-    display: flex; align-items: center; gap: 8px;
-    padding: 10px 16px;
-    border-bottom: 1px solid var(--border);
-    background: var(--surface);
-    flex-wrap: wrap;
-  }
-
-  .canvas-toolbar .tool-group {
-    display: flex; gap: 4px;
-    padding: 4px;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-  }
-
-  .tool-btn {
-    padding: 6px 12px;
-    border: none; background: transparent;
-    color: var(--text2);
-    font-size: 12px; font-weight: 600;
-    font-family: 'Syne', sans-serif;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all 0.15s;
-    display: flex; align-items: center; gap: 6px;
-    white-space: nowrap;
-  }
-
-  .tool-btn:hover { background: var(--surface3); color: var(--text); }
-
-  .tool-btn.active {
-    background: linear-gradient(135deg, rgba(0,212,170,0.2), rgba(79,142,255,0.2));
-    color: var(--accent);
-    border: 1px solid rgba(0,212,170,0.3);
-  }
-
-  .canvas-wrap {
-    flex: 1;
-    position: relative;
-    overflow: hidden;
-    display: flex; align-items: center; justify-content: center;
-    background: var(--bg);
-  }
-
-  #main-canvas {
-    display: block;
-    cursor: crosshair;
-    touch-action: none;
-  }
-
-  /* ── MODE STATUS ── */
-  .mode-indicator {
-    position: absolute; top: 12px; left: 12px;
-    background: rgba(10,14,26,0.85);
-    backdrop-filter: blur(8px);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 6px 12px;
-    font-size: 11px;
-    font-family: 'JetBrains Mono', monospace;
-    color: var(--text2);
-    display: flex; align-items: center; gap: 6px;
-    pointer-events: none;
-  }
-
-  /* ── IMAGE UPLOAD ZONE ── */
-  .upload-zone {
-    border: 2px dashed var(--border);
-    border-radius: var(--radius);
-    padding: 24px 16px;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.2s;
-    background: var(--surface3);
-    position: relative;
-  }
-
-  .upload-zone:hover {
-    border-color: var(--accent);
-    background: rgba(0,212,170,0.05);
-  }
-
-  .upload-zone input {
-    position: absolute; inset: 0;
-    opacity: 0; cursor: pointer; width: 100%;
-  }
-
-  .upload-zone .icon { font-size: 28px; margin-bottom: 8px; }
-  .upload-zone .hint { font-size: 12px; color: var(--text3); margin-top: 4px; }
-
-  /* ── COORD DISPLAY ── */
-  .coord-display {
-    position: absolute; bottom: 12px; right: 12px;
-    background: rgba(10,14,26,0.85);
-    backdrop-filter: blur(8px);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 5px 10px;
-    font-size: 11px;
-    font-family: 'JetBrains Mono', monospace;
-    color: var(--text3);
-    pointer-events: none;
-  }
-
-  /* ── SCROLLBAR ── */
-  ::-webkit-scrollbar { width: 4px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-
-  /* ── RESPONSIVE ── */
-  @media (max-width: 900px) {
-    .app {
-      grid-template-columns: 1fr;
-      grid-template-rows: auto auto 1fr;
-      height: auto;
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Detector Geométrico Arquimedes</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tensorflow/4.10.0/tf.min.js"></script>
+  <style>
+    :root {
+      --bg: #f0f4f8;
+      --surface: #ffffff;
+      --surface2: #f7f9fc;
+      --surface3: #edf1f7;
+      --border: #d0d9e8;
+      --border2: #b8c6dc;
+      --accent: #0072e5;
+      --accent-l: #e8f1fd;
+      --accent2: #00a67e;
+      --accent2-l: #e3f7f2;
+      --accent3: #e03c3c;
+      --accent3-l: #fdeaea;
+      --accent4: #d97706;
+      --accent4-l: #fef3cd;
+      --accent5: #7c3aed;
+      --accent5-l: #f0ebff;
+      --text: #1a2332;
+      --text2: #4a5568;
+      --text3: #8898aa;
+      --success: #15803d;
+      --success-l: #dcfce7;
+      --radius: 14px;
+      --radius-sm: 9px;
+      --shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0, 0, 0, 0.05);
     }
-    .panel-left { max-height: 400px; }
-    .panel-canvas { height: 60vw; min-height: 300px; }
-  }
 
-  /* ── ANIMATIONS ── */
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(8px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-  .fadeIn { animation: fadeIn 0.3s ease forwards; }
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      font-size: 15px;
+    }
 
-  /* ── TOOLTIP ── */
-  .tooltip-text {
-    font-size: 11px; color: var(--text2); line-height: 1.5;
-    font-family: 'JetBrains Mono', monospace;
-  }
+    /* HEADER */
+    header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 16px 28px;
+      background: var(--surface);
+      border-bottom: 1.5px solid var(--border);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
 
-  .divider {
-    height: 1px; background: var(--border); margin: 4px 0;
-  }
+    .logo-icon {
+      width: 44px;
+      height: 44px;
+      background: linear-gradient(135deg, #0072e5, #00a67e);
+      border-radius: 11px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      box-shadow: 0 2px 12px rgba(0, 114, 229, 0.28);
+      flex-shrink: 0;
+    }
 
-  .step-num {
-    width: 20px; height: 20px;
-    border-radius: 50%;
-    background: var(--surface3);
-    border: 1px solid var(--border);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 10px; font-weight: 700;
-    color: var(--text2);
-    flex-shrink: 0;
-  }
+    .logo-text h1 {
+      font-size: 19px;
+      font-weight: 800;
+      color: var(--text);
+      line-height: 1.1;
+    }
 
-  .step-num.done {
-    background: rgba(0,212,170,0.15);
-    border-color: var(--accent);
-    color: var(--accent);
-  }
+    .logo-text p {
+      font-size: 12px;
+      color: var(--text3);
+      font-family: 'JetBrains Mono', monospace;
+    }
 
-  .step-row {
-    display: flex; align-items: center; gap: 8px;
-    font-size: 12px; color: var(--text2);
-    padding: 4px 0;
-  }
+    .header-badge {
+      margin-left: auto;
+      background: var(--accent-l);
+      border: 1.5px solid #bdd6f8;
+      border-radius: 20px;
+      padding: 5px 14px;
+      font-size: 12px;
+      color: var(--accent);
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 600;
+    }
 
-  /* ── MANUAL INPUT TABLE ── */
-  .side-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 12px;
-    font-family: 'JetBrains Mono', monospace;
-  }
+    /* APP */
+    .app {
+      display: grid;
+      grid-template-columns: 375px 1fr;
+      grid-template-rows: auto 1fr;
+      height: calc(100vh - 77px);
+    }
 
-  .side-table th {
-    padding: 6px 8px;
-    text-align: left;
-    color: var(--text3);
-    border-bottom: 1px solid var(--border);
-    font-weight: 600; font-size: 11px;
-  }
+    /* TABS */
+    .tab-nav {
+      grid-column: 1/-1;
+      display: flex;
+      gap: 4px;
+      padding: 14px 22px 0;
+      background: var(--surface);
+      border-bottom: 1.5px solid var(--border);
+    }
 
-  .side-table td { padding: 5px 8px; border-bottom: 1px solid rgba(42,58,85,0.5); }
-  .side-table input {
-    background: var(--surface3);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 4px 8px;
-    color: var(--text);
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 12px;
-    width: 70px;
-  }
+    .tab-btn {
+      position: relative;
+      padding: 10px 22px;
+      border: none;
+      background: transparent;
+      color: var(--text2);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      border-radius: 10px 10px 0 0;
+      transition: all .18s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
 
-  .side-table input:focus { outline: none; border-color: var(--accent); }
+    .tab-btn:hover {
+      background: var(--surface3);
+      color: var(--text);
+    }
 
-  .no-results {
-    text-align: center;
-    padding: 24px;
-    color: var(--text3);
-    font-size: 13px;
-  }
+    .tab-btn.active {
+      background: var(--bg);
+      color: var(--accent);
+      border: 1.5px solid var(--border);
+      border-bottom: 1.5px solid var(--bg);
+      margin-bottom: -1.5px;
+    }
 
-  .no-results .big { font-size: 32px; margin-bottom: 8px; }
-</style>
+    .tab-btn.active::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 55%;
+      height: 3px;
+      background: linear-gradient(90deg, #0072e5, #00a67e);
+      border-radius: 3px 3px 0 0;
+    }
+
+    /* PANELS */
+    .panel-left {
+      background: var(--surface);
+      border-right: 1.5px solid var(--border);
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .panel-canvas {
+      display: flex;
+      flex-direction: column;
+      background: var(--bg);
+      overflow: hidden;
+    }
+
+    /* CARDS */
+    .card {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .card-header {
+      padding: 13px 16px;
+      border-bottom: 1.5px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      color: var(--text2);
+      background: var(--surface2);
+    }
+
+    .card-header-icon {
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+    }
+
+    .card-body {
+      padding: 16px;
+    }
+
+    /* BUTTONS */
+    .btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 11px 18px;
+      border-radius: var(--radius-sm);
+      border: none;
+      cursor: pointer;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      transition: all .16s;
+      width: 100%;
+    }
+
+    .btn:active {
+      transform: scale(.97);
+    }
+
+    .btn:disabled {
+      opacity: .4;
+      cursor: not-allowed;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      box-shadow: 0 2px 10px rgba(0, 114, 229, .3);
+    }
+
+    .btn-primary:hover {
+      background: #005ec7;
+    }
+
+    .btn-secondary {
+      background: var(--surface2);
+      color: var(--text2);
+      border: 1.5px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      background: var(--surface3);
+      color: var(--text);
+    }
+
+    .btn-green {
+      background: var(--accent2);
+      color: #fff;
+      box-shadow: 0 2px 10px rgba(0, 166, 126, .3);
+    }
+
+    .btn-green:hover {
+      background: #007d5e;
+    }
+
+    .btn-red {
+      background: var(--accent3);
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(224, 60, 60, .25);
+    }
+
+    .btn-red:hover {
+      background: #b82e2e;
+    }
+
+    .btn-orange {
+      background: var(--accent4);
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(217, 119, 6, .25);
+    }
+
+    .btn-orange:hover {
+      background: #b45309;
+    }
+
+    .btn-purple {
+      background: var(--accent5);
+      color: #fff;
+      box-shadow: 0 2px 10px rgba(124, 58, 237, .3);
+    }
+
+    .btn-purple:hover {
+      background: #6424cc;
+    }
+
+    .btn-sm {
+      padding: 8px 14px;
+      font-size: 13px;
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-row .btn {
+      flex: 1;
+    }
+
+    /* INPUTS */
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .input-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text3);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+
+    .input-field {
+      background: var(--surface2);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 13px;
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      transition: border-color .18s;
+      width: 100%;
+    }
+
+    .input-field:focus {
+      outline: none;
+      border-color: var(--accent);
+      background: #fff;
+      box-shadow: 0 0 0 3px rgba(0, 114, 229, .1);
+    }
+
+    .input-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .input-row .input-group {
+      flex: 1;
+    }
+
+    /* STATUS */
+    .status-bar {
+      padding: 9px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-family: 'JetBrains Mono', monospace;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all .25s;
+    }
+
+    .s-idle {
+      background: var(--surface3);
+      color: var(--text2);
+      border: 1.5px solid var(--border);
+    }
+
+    .s-active {
+      background: var(--accent2-l);
+      color: var(--accent2);
+      border: 1.5px solid #a8e8d8;
+    }
+
+    .s-warn {
+      background: var(--accent4-l);
+      color: var(--accent4);
+      border: 1.5px solid #fad17a;
+    }
+
+    .s-error {
+      background: var(--accent3-l);
+      color: var(--accent3);
+      border: 1.5px solid #f5b4b4;
+    }
+
+    .s-purple {
+      background: var(--accent5-l);
+      color: var(--accent5);
+      border: 1.5px solid #c4b0f5;
+    }
+
+    .sdot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: currentColor;
+      flex-shrink: 0;
+    }
+
+    .sdot.pulse {
+      animation: pulse 1.4s infinite;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1
+      }
+
+      50% {
+        opacity: .25
+      }
+    }
+
+    /* UPLOAD */
+    .upload-zone {
+      border: 2.5px dashed var(--border2);
+      border-radius: var(--radius);
+      padding: 24px 16px;
+      text-align: center;
+      cursor: pointer;
+      transition: all .2s;
+      background: var(--surface2);
+      position: relative;
+    }
+
+    .upload-zone:hover {
+      border-color: var(--accent);
+      background: var(--accent-l);
+    }
+
+    .upload-zone input {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+    }
+
+    .upload-zone .ui {
+      font-size: 30px;
+      margin-bottom: 8px;
+    }
+
+    .upload-zone .ut {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .upload-zone .uh {
+      font-size: 12px;
+      color: var(--text3);
+      margin-top: 4px;
+    }
+
+    /* STEPS */
+    .step-row {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      font-size: 13px;
+      color: var(--text2);
+      padding: 3px 0;
+    }
+
+    .stepn {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--surface3);
+      border: 1.5px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--text3);
+      flex-shrink: 0;
+    }
+
+    .stepn.done {
+      background: var(--accent2-l);
+      border-color: var(--accent2);
+      color: var(--accent2);
+    }
+
+    /* RESULTS */
+    .result-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+      gap: 12px;
+    }
+
+    .result-item:last-child {
+      border-bottom: none;
+    }
+
+    .rl {
+      font-size: 13px;
+      color: var(--text2);
+      font-weight: 500;
+      flex-shrink: 0;
+    }
+
+    .rv {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+      text-align: right;
+    }
+
+    .rv.ac {
+      color: var(--accent);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 15px;
+    }
+
+    .rv.gr {
+      color: var(--accent2);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .rv.or {
+      color: var(--accent4);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* BADGE */
+    .figure-badge {
+      text-align: center;
+      padding: 16px;
+      background: linear-gradient(135deg, var(--accent-l), var(--accent2-l));
+      border: 2px solid #bdd6f8;
+      border-radius: var(--radius);
+      margin-bottom: 14px;
+    }
+
+    .fname {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--accent);
+    }
+
+    .fsub {
+      font-size: 13px;
+      color: var(--text2);
+      margin-top: 4px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* TAGS */
+    .tag-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-top: 8px;
+    }
+
+    .tag {
+      padding: 4px 11px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .tag-blue {
+      background: var(--accent-l);
+      color: var(--accent);
+      border: 1.5px solid #bdd6f8;
+    }
+
+    .tag-green {
+      background: var(--success-l);
+      color: var(--success);
+      border: 1.5px solid #a8e8d8;
+    }
+
+    .tag-orange {
+      background: var(--accent4-l);
+      color: var(--accent4);
+      border: 1.5px solid #fad17a;
+    }
+
+    .tag-red {
+      background: var(--accent3-l);
+      color: var(--accent3);
+      border: 1.5px solid #f5b4b4;
+    }
+
+    .tag-purple {
+      background: var(--accent5-l);
+      color: var(--accent5);
+      border: 1.5px solid #c4b0f5;
+    }
+
+    .tag-teal {
+      background: var(--accent2-l);
+      color: var(--accent2);
+      border: 1.5px solid #a8e8d8;
+    }
+
+    /* FILTER CHECKBOXES */
+    .filter-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .filter-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      background: var(--surface2);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all .15s;
+      user-select: none;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text2);
+    }
+
+    .filter-item:hover {
+      border-color: var(--accent);
+      color: var(--text);
+    }
+
+    .filter-item.checked {
+      background: var(--accent-l);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .filter-item input[type=checkbox] {
+      display: none;
+    }
+
+    .fcheck {
+      width: 18px;
+      height: 18px;
+      border-radius: 5px;
+      border: 2px solid var(--border2);
+      background: var(--surface);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      flex-shrink: 0;
+      transition: all .15s;
+    }
+
+    .filter-item.checked .fcheck {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    /* RESULT TABLE */
+    .res-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+      margin-top: 8px;
+    }
+
+    .res-table th {
+      padding: 8px 10px;
+      text-align: left;
+      color: var(--text3);
+      border-bottom: 2px solid var(--border);
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      background: var(--surface2);
+    }
+
+    .res-table td {
+      padding: 9px 10px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .res-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .res-table tr:hover td {
+      background: var(--surface2);
+    }
+
+    /* ML PROGRESS */
+    .ml-bar-wrap {
+      height: 6px;
+      background: var(--surface3);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-top: 6px;
+    }
+
+    .ml-bar {
+      height: 100%;
+      width: 0%;
+      border-radius: 3px;
+      background: linear-gradient(90deg, var(--accent5), var(--accent));
+      transition: width .3s ease;
+    }
+
+    /* CANVAS */
+    .canvas-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      border-bottom: 1.5px solid var(--border);
+      background: var(--surface);
+      flex-wrap: wrap;
+    }
+
+    .tool-group {
+      display: flex;
+      gap: 3px;
+      padding: 4px;
+      background: var(--surface2);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+    }
+
+    .tool-btn {
+      padding: 6px 13px;
+      border: none;
+      background: transparent;
+      color: var(--text2);
+      font-size: 13px;
+      font-weight: 600;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all .14s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+    }
+
+    .tool-btn:hover {
+      background: var(--surface3);
+      color: var(--text);
+    }
+
+    .tool-btn.active {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .canvas-wrap {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      background: var(--bg);
+    }
+
+    #main-canvas {
+      display: block;
+      cursor: crosshair;
+      touch-action: none;
+    }
+
+    .mode-indicator {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      background: rgba(255, 255, 255, .92);
+      backdrop-filter: blur(8px);
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 13px;
+      font-size: 12px;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text2);
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      pointer-events: none;
+      box-shadow: var(--shadow);
+    }
+
+    .coord-display {
+      position: absolute;
+      bottom: 12px;
+      right: 12px;
+      background: rgba(255, 255, 255, .88);
+      backdrop-filter: blur(8px);
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      padding: 5px 11px;
+      font-size: 12px;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text3);
+      pointer-events: none;
+      box-shadow: var(--shadow);
+    }
+
+    ::-webkit-scrollbar {
+      width: 5px
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 3px
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(10px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0)
+      }
+    }
+
+    .fade-up {
+      animation: fadeUp .3s ease forwards
+    }
+
+    .hint-text {
+      font-size: 13px;
+      color: var(--text2);
+      line-height: 1.6
+    }
+
+    @media(max-width:860px) {
+      .app {
+        grid-template-columns: 1fr;
+        height: auto
+      }
+
+      .panel-left {
+        max-height: 400px
+      }
+
+      .panel-canvas {
+        height: 55vw;
+        min-height: 280px
+      }
+    }
+  </style>
 </head>
+
 <body>
 
-<header>
-  <div class="logo-icon">📐</div>
-  <div class="logo-text">
-    <h1>Detector Geométrico Arquimedes</h1>
-    <p>Educação Matemática · Ensino Fundamental II</p>
-  </div>
-  <div class="header-badge">v3.0 · Fortaleza/CE</div>
-</header>
+  <header>
+    <div class="logo-icon">📐</div>
+    <div class="logo-text">
+      <h1>Detector Geométrico Arquimedes</h1>
+      <p>Educação Matemática · Ensino Fundamental II</p>
+    </div>
+    <div class="header-badge">v4.0 · Fortaleza/CE</div>
+  </header>
 
-<div class="app">
+  <div class="app">
+    <div class="tab-nav">
+      <button class="tab-btn active" onclick="switchTab('image')" id="tab-image">🖼️ Análise por Imagem</button>
+      <button class="tab-btn" onclick="switchTab('manual')" id="tab-manual">✏️ Construção Manual</button>
+    </div>
 
-  <!-- TABS -->
-  <div class="tab-nav">
-    <button class="tab-btn active" onclick="switchTab('image')" id="tab-image">
-      <span class="tab-dot"></span> Análise por Imagem
-    </button>
-    <button class="tab-btn" onclick="switchTab('manual')" id="tab-manual">
-      <span class="tab-dot"></span> Construção Manual
-    </button>
-  </div>
+    <!-- LEFT PANEL -->
+    <div class="panel-left">
 
-  <!-- ═══ PANEL LEFT ═══ -->
-  <div class="panel-left" id="left-panel">
+      <!-- IMAGE TAB -->
+      <div id="content-image" style="display:flex;flex-direction:column;gap:14px">
 
-    <!-- IMAGE TAB CONTENT -->
-    <div id="content-image">
-
-      <!-- Step 1: Upload -->
-      <div class="card">
-        <div class="card-header">
-          <div class="card-header-icon" style="background:rgba(0,212,170,0.15)">📁</div>
-          <span>1. Carregar Imagem</span>
-        </div>
-        <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
-          <div class="upload-zone" id="upload-zone">
-            <input type="file" id="img-upload" accept="image/*" onchange="loadImage(event)">
-            <div class="icon">🖼️</div>
-            <div style="font-size:13px;font-weight:600">Clique ou arraste a imagem</div>
-            <div class="hint">JPG, PNG — qualquer tamanho</div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-header-icon" style="background:var(--accent-l)">📁</div>1 · Carregar Imagem
           </div>
-          <button class="btn btn-secondary btn-sm" onclick="clearAll()">🗑 Limpar tudo</button>
-        </div>
-      </div>
-
-      <!-- Step 2: Scale -->
-      <div class="card">
-        <div class="card-header">
-          <div class="card-header-icon" style="background:rgba(79,142,255,0.15)">📏</div>
-          <span>2. Definir Escala</span>
-        </div>
-        <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
-          <div id="scale-steps">
-            <div class="step-row"><span class="step-num" id="sn1">1</span> Clique em dois pontos de referência na imagem</div>
-            <div class="step-row"><span class="step-num" id="sn2">2</span> Informe a distância real</div>
-          </div>
-          <div class="input-row">
-            <div class="input-group">
-              <label class="input-label">Valor real</label>
-              <input class="input-field" id="scale-value" type="number" min="0.01" step="0.01" value="10" placeholder="Ex: 10">
+          <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
+            <div class="upload-zone">
+              <input type="file" id="img-upload" accept="image/*" onchange="loadImage(event)">
+              <div class="ui">🖼️</div>
+              <div class="ut">Clique ou arraste aqui</div>
+              <div class="uh">JPG, PNG — qualquer tamanho</div>
             </div>
-            <div class="input-group">
-              <label class="input-label">Unidade</label>
-              <select class="input-field" id="scale-unit">
-                <option>cm</option><option>m</option><option>mm</option><option>km</option><option>px</option>
-              </select>
+            <button class="btn btn-secondary btn-sm" onclick="clearAll()">🗑️ Limpar tudo</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-header-icon" style="background:var(--accent2-l)">📏</div>2 · Definir Escala
+          </div>
+          <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
+            <div class="step-row"><span class="stepn" id="sn1">1</span>Marque dois pontos de referência</div>
+            <div class="step-row"><span class="stepn" id="sn2">2</span>Informe a distância real</div>
+            <div class="input-row">
+              <div class="input-group"><label class="input-label">Valor real</label><input class="input-field" id="scale-value" type="number" min=".01" step=".01" value="10"></div>
+              <div class="input-group"><label class="input-label">Unidade</label><select class="input-field" id="scale-unit">
+                  <option>cm</option>
+                  <option>m</option>
+                  <option>mm</option>
+                  <option>km</option>
+                  <option>px</option>
+                </select></div>
+            </div>
+            <button class="btn btn-green btn-sm" onclick="startScaleMode()">🎯 Marcar Escala</button>
+            <div class="status-bar s-idle" id="scale-status">
+              <div class="sdot"></div><span>Aguardando imagem...</span>
             </div>
           </div>
-          <button class="btn btn-accent2 btn-sm" onclick="startScaleMode()" id="btn-scale">
-            🎯 Marcar Escala
-          </button>
-          <div class="status-bar status-idle" id="scale-status">
-            <div class="status-dot"></div>
-            <span>Aguardando imagem...</span>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-header-icon" style="background:var(--accent3-l)">📍</div>3 · Marcar Vértices Manualmente
+          </div>
+          <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
+            <p class="hint-text">Clique sobre cada vértice da figura na imagem e depois clique em <b>Calcular</b>.</p>
+            <div class="btn-row">
+              <button class="btn btn-red btn-sm" onclick="startMarkMode()">✏️ Marcar Pontos</button>
+              <button class="btn btn-secondary btn-sm" onclick="undoPoint()">↩ Desfazer</button>
+            </div>
+            <div class="status-bar s-idle" id="mark-status">
+              <div class="sdot"></div><span>0 vértices marcados</span>
+            </div>
+            <button class="btn btn-primary" onclick="calculateAndShow()" style="margin-top:2px">⚡ Calcular Figura</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-header-icon" style="background:var(--accent5-l)">🤖</div>4 · Detecção Automática — Machine Learning
+          </div>
+          <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
+            <p class="hint-text">Usa <b>TensorFlow.js</b> com filtro Sobel para detectar bordas e encontrar os vértices automaticamente.</p>
+            <button class="btn btn-purple btn-sm" onclick="runMLDetect()" id="btn-ml">🧠 Detectar Automaticamente</button>
+            <div class="status-bar s-idle" id="ml-status">
+              <div class="sdot"></div><span>Aguardando imagem...</span>
+            </div>
+            <div class="ml-bar-wrap">
+              <div class="ml-bar" id="ml-bar"></div>
+            </div>
+            <button class="btn btn-primary" onclick="calculateAndShow()" id="btn-ml-calc" style="display:none">⚡ Calcular com Vértices Detectados</button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- MANUAL TAB -->
+      <div id="content-manual" style="display:none;flex-direction:column;gap:14px">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-header-icon" style="background:var(--accent4-l)">🖊️</div>Construção Manual
+          </div>
+          <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
+            <p class="hint-text">Clique no canvas para adicionar vértices. Mínimo 3 pontos para calcular.</p>
+            <div class="btn-row">
+              <button class="btn btn-orange btn-sm" onclick="startManualMode()">✏️ Ativar Desenho</button>
+              <button class="btn btn-secondary btn-sm" onclick="undoPoint()">↩ Desfazer</button>
+            </div>
+            <div class="status-bar s-idle" id="manual-status">
+              <div class="sdot"></div><span>0 vértices</span>
+            </div>
+            <button class="btn btn-primary" onclick="calculateAndShow()" style="margin-top:2px">⚡ Calcular Figura</button>
           </div>
         </div>
       </div>
 
-      <!-- Step 3: Mark Points -->
-      <div class="card">
-        <div class="card-header">
-          <div class="card-header-icon" style="background:rgba(255,107,107,0.15)">📍</div>
-          <span>3. Marcar Vértices</span>
-        </div>
-        <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
-          <p class="tooltip-text">Ative o modo de marcação, clique sobre a figura na imagem para adicionar cada vértice e depois clique em <strong style="color:var(--accent)">Calcular Figura</strong>.</p>
-          <button class="btn btn-danger btn-sm" onclick="startMarkMode()" id="btn-mark">
-            ✏️ Marcar Pontos
-          </button>
-          <button class="btn btn-secondary btn-sm" onclick="undoPoint()">↩ Desfazer último</button>
-          <div class="status-bar status-idle" id="mark-status">
-            <div class="status-dot"></div>
-            <span>0 vértices marcados</span>
+      <!-- RESULTS -->
+      <div id="results-section" style="display:none" class="fade-up">
+
+        <div id="figure-badge-wrap"></div>
+
+        <!-- FILTER CHECKBOXES -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-header-icon" style="background:var(--accent-l)">🔧</div>Mostrar no Resultado
           </div>
-          <button class="btn btn-primary" onclick="calculateAndShow()" id="btn-calc" style="margin-top:4px">
-            ⚡ Calcular Figura
-          </button>
-        </div>
-      </div>
-
-    </div><!-- end content-image -->
-
-    <!-- MANUAL TAB CONTENT -->
-    <div id="content-manual" style="display:none">
-
-      <div class="card">
-        <div class="card-header">
-          <div class="card-header-icon" style="background:rgba(255,209,102,0.15)">🖊️</div>
-          <span>Modo Construção Manual</span>
-        </div>
-        <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
-          <p class="tooltip-text">Clique no canvas para adicionar vértices. Mínimo 3 para calcular.</p>
-          <button class="btn btn-warning btn-sm" onclick="startManualMode()" id="btn-manual-draw">
-            ✏️ Ativar Desenho
-          </button>
-          <button class="btn btn-secondary btn-sm" onclick="undoPoint()">↩ Desfazer último</button>
-          <div class="status-bar status-idle" id="manual-status">
-            <div class="status-dot"></div>
-            <span>0 vértices</span>
-          </div>
-          <button class="btn btn-primary" onclick="calculateAndShow()" id="btn-calc-manual">
-            ⚡ Calcular Figura
-          </button>
-        </div>
-      </div>
-
-      <!-- Manual measurements override -->
-      <div class="card" id="manual-override-card" style="display:none">
-        <div class="card-header">
-          <div class="card-header-icon" style="background:rgba(34,197,94,0.15)">📝</div>
-          <span>Ajuste Manual de Medidas</span>
-        </div>
-        <div class="card-body">
-          <p class="tooltip-text" style="margin-bottom:10px">Edite os comprimentos dos lados (deixe vazio para usar o valor calculado):</p>
-          <div id="manual-sides-table"></div>
-        </div>
-      </div>
-
-    </div><!-- end content-manual -->
-
-    <!-- ═══ RESULTS (shared) ═══ -->
-    <div id="results-section" style="display:none" class="fadeIn">
-
-      <div id="figure-badge-wrap"></div>
-
-      <div class="card">
-        <div class="card-header">
-          <div class="card-header-icon" style="background:rgba(0,212,170,0.15)">📊</div>
-          <span>Medidas</span>
-        </div>
-        <div class="card-body" id="results-measures"></div>
-      </div>
-
-      <div class="card">
-        <div class="card-header">
-          <div class="card-header-icon" style="background:rgba(79,142,255,0.15)">🔍</div>
-          <span>Classificação</span>
-        </div>
-        <div class="card-body" id="results-classification"></div>
-      </div>
-
-      <div class="card">
-        <div class="card-header">
-          <div class="card-header-icon" style="background:rgba(255,209,102,0.15)">📋</div>
-          <span>Ângulos e Lados</span>
-        </div>
-        <div class="card-body" id="results-details"></div>
-      </div>
-
-      <!-- Export / Email -->
-      <div class="card">
-        <div class="card-header">
-          <div class="card-header-icon" style="background:rgba(255,107,107,0.15)">📤</div>
-          <span>Exportar</span>
-        </div>
-        <div class="card-body" style="display:flex;flex-direction:column;gap:8px">
-          <button class="btn btn-secondary btn-sm" onclick="downloadCanvas()">💾 Baixar Imagem</button>
-          <div class="input-row">
-            <div class="input-group">
-              <label class="input-label">Email do professor</label>
-              <input class="input-field" id="prof-email" type="email" value="professor@email.com" placeholder="professor@email.com">
+          <div class="card-body">
+            <div class="filter-grid">
+              <label class="filter-item checked" data-key="showName" onclick="toggleFilter(this)"><span class="fcheck">✓</span>Nome da Figura</label>
+              <label class="filter-item checked" data-key="showSides" onclick="toggleFilter(this)"><span class="fcheck">✓</span>Lados</label>
+              <label class="filter-item checked" data-key="showAngles" onclick="toggleFilter(this)"><span class="fcheck">✓</span>Ângulos</label>
+              <label class="filter-item checked" data-key="showPerim" onclick="toggleFilter(this)"><span class="fcheck">✓</span>Perímetro</label>
+              <label class="filter-item checked" data-key="showArea" onclick="toggleFilter(this)"><span class="fcheck">✓</span>Área</label>
+              <label class="filter-item checked" data-key="showClass" onclick="toggleFilter(this)"><span class="fcheck">✓</span>Classificação</label>
             </div>
           </div>
-          <button class="btn btn-success btn-sm" onclick="sendEmail()">📧 Enviar Resultado</button>
         </div>
-      </div>
 
-    </div><!-- end results -->
+        <div class="card" id="block-measures">
+          <div class="card-header">
+            <div class="card-header-icon" style="background:var(--accent-l)">📊</div>Medidas Gerais
+          </div>
+          <div class="card-body" id="results-measures"></div>
+        </div>
 
-  </div><!-- end panel-left -->
+        <div class="card" id="block-class">
+          <div class="card-header">
+            <div class="card-header-icon" style="background:var(--accent2-l)">🔍</div>Classificação
+          </div>
+          <div class="card-body" id="results-class"></div>
+        </div>
 
-  <!-- ═══ PANEL CANVAS ═══ -->
-  <div class="panel-canvas">
+        <div class="card" id="block-details">
+          <div class="card-header">
+            <div class="card-header-icon" style="background:var(--accent4-l)">📋</div>Lados e Ângulos
+          </div>
+          <div class="card-body" id="results-details"></div>
+        </div>
 
-    <div class="canvas-toolbar">
-      <div class="tool-group">
-        <button class="tool-btn" id="tool-grid" onclick="toggleGrid()" title="Malha">⊞ Grid</button>
-        <button class="tool-btn" id="tool-labels" onclick="toggleLabels()" title="Rótulos">🏷 Rótulos</button>
-        <button class="tool-btn" id="tool-angles" onclick="toggleAngles()" title="Ângulos">∠ Ângulos</button>
-      </div>
-      <div class="tool-group">
-        <button class="tool-btn" onclick="zoomIn()">+ Zoom</button>
-        <button class="tool-btn" onclick="zoomOut()">− Zoom</button>
-        <button class="tool-btn" onclick="resetView()">⟳ Reset</button>
-      </div>
-      <div style="margin-left:auto;font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace" id="canvas-info">
-        Nenhuma figura
+        <div class="card">
+          <div class="card-header">
+            <div class="card-header-icon" style="background:var(--accent3-l)">📤</div>Exportar
+          </div>
+          <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
+            <button class="btn btn-secondary btn-sm" onclick="downloadCanvas()">💾 Baixar Imagem do Canvas</button>
+            <div class="input-group"><label class="input-label">E-mail do professor</label><input class="input-field" id="prof-email" type="email" value="professor@email.com"></div>
+            <button class="btn btn-green btn-sm" onclick="sendEmail()">📧 Enviar por E-mail</button>
+          </div>
+        </div>
+
       </div>
     </div>
 
-    <div class="canvas-wrap" id="canvas-wrap">
-      <canvas id="main-canvas"></canvas>
-      <div class="mode-indicator" id="mode-indicator">
-        <div class="status-dot"></div>
-        <span id="mode-text">Aguardando...</span>
+    <!-- CANVAS PANEL -->
+    <div class="panel-canvas">
+      <div class="canvas-toolbar">
+        <div class="tool-group">
+          <button class="tool-btn active" id="tool-grid" onclick="toggleGrid()">⊞ Grid</button>
+          <button class="tool-btn active" id="tool-labels" onclick="toggleLabels()">🏷️ Rótulos</button>
+          <button class="tool-btn active" id="tool-angles" onclick="toggleAnglesDisplay()">∠ Ângulos</button>
+        </div>
+        <div class="tool-group">
+          <button class="tool-btn" onclick="zoomIn()">＋</button>
+          <button class="tool-btn" onclick="zoomOut()">－</button>
+          <button class="tool-btn" onclick="resetView()">⟳ Reset</button>
+        </div>
+        <div id="canvas-info" style="margin-left:auto;font-size:12px;color:var(--text3);font-family:'JetBrains Mono',monospace">Nenhuma figura</div>
       </div>
-      <div class="coord-display" id="coord-display">x: — y: —</div>
+      <div class="canvas-wrap" id="canvas-wrap">
+        <canvas id="main-canvas"></canvas>
+        <div class="mode-indicator">
+          <div class="sdot" id="mode-dot"></div><span id="mode-text">Aguardando...</span>
+        </div>
+        <div class="coord-display" id="coord-display">x: — &nbsp; y: —</div>
+      </div>
     </div>
+  </div>
 
-  </div><!-- end panel-canvas -->
-
-</div><!-- end app -->
-
-<script>
-// ═══════════════════════════════════════════════
-//  MODULE: STATE
-// ═══════════════════════════════════════════════
-const State = {
-  tab: 'image',
-  mode: 'idle',        // idle | scale1 | scale2 | mark | manual
-  image: null,
-  imageObj: null,
-  points: [],          // {x, y} canvas coords
-  scalePoints: [],     // two points for scale
-  scalePx: null,       // pixels between scale points
-  scaleReal: 10,
-  scaleUnit: 'cm',
-  results: null,
-  zoom: 1,
-  pan: {x:0, y:0},
-  showGrid: true,
-  showLabels: true,
-  showAngles: true,
-  canvasW: 0,
-  canvasH: 0,
-  imgOffX: 0, imgOffY: 0, imgScale: 1,
-};
-
-// ═══════════════════════════════════════════════
-//  MODULE: CANVAS / RENDER
-// ═══════════════════════════════════════════════
-const canvas = document.getElementById('main-canvas');
-const ctx = canvas.getContext('2d');
-
-function resizeCanvas() {
-  const wrap = document.getElementById('canvas-wrap');
-  canvas.width = wrap.clientWidth || 800;
-  canvas.height = wrap.clientHeight || 500;
-  State.canvasW = canvas.width;
-  State.canvasH = canvas.height;
-  render();
-}
-
-function render() {
-  const W = canvas.width, H = canvas.height;
-  ctx.clearRect(0, 0, W, H);
-
-  ctx.save();
-  ctx.translate(State.pan.x, State.pan.y);
-  ctx.scale(State.zoom, State.zoom);
-
-  if (State.showGrid) drawGrid(W, H);
-  if (State.imageObj) drawImage();
-  if (State.scalePoints.length === 2) drawScaleLine();
-  if (State.points.length > 0) drawPolygon();
-  if (State.results && State.showAngles) drawAngles();
-  if (State.results && State.showLabels) drawLabels();
-  drawScalePoint();
-
-  ctx.restore();
-}
-
-function drawGrid(W, H) {
-  const size = 30;
-  ctx.strokeStyle = 'rgba(79,142,255,0.07)';
-  ctx.lineWidth = 0.5;
-  const invZ = 1/State.zoom;
-  const ox = -State.pan.x * invZ;
-  const oy = -State.pan.y * invZ;
-  const cols = Math.ceil(W * invZ / size) + 2;
-  const rows = Math.ceil(H * invZ / size) + 2;
-  const sx = Math.floor(ox/size)*size;
-  const sy = Math.floor(oy/size)*size;
-  for(let i=0;i<cols;i++){
-    const x = sx + i*size;
-    ctx.beginPath(); ctx.moveTo(x,sy); ctx.lineTo(x, sy+rows*size);
-    ctx.stroke();
-  }
-  for(let j=0;j<rows;j++){
-    const y = sy + j*size;
-    ctx.beginPath(); ctx.moveTo(sx,y); ctx.lineTo(sx+cols*size, y);
-    ctx.stroke();
-  }
-  // Major gridlines
-  ctx.strokeStyle = 'rgba(79,142,255,0.14)';
-  ctx.lineWidth = 0.8;
-  const bigSize = size*5;
-  const bsx = Math.floor(ox/bigSize)*bigSize;
-  const bsy = Math.floor(oy/bigSize)*bigSize;
-  const bcols = Math.ceil(W*invZ/bigSize)+2;
-  const brows = Math.ceil(H*invZ/bigSize)+2;
-  for(let i=0;i<bcols;i++){
-    const x = bsx+i*bigSize;
-    ctx.beginPath(); ctx.moveTo(x,bsy); ctx.lineTo(x,bsy+brows*bigSize); ctx.stroke();
-  }
-  for(let j=0;j<brows;j++){
-    const y = bsy+j*bigSize;
-    ctx.beginPath(); ctx.moveTo(bsx,y); ctx.lineTo(bsx+bcols*bigSize,y); ctx.stroke();
-  }
-}
-
-function drawImage() {
-  const img = State.imageObj;
-  const {imgOffX:ox, imgOffY:oy, imgScale:s} = State;
-  ctx.globalAlpha = 0.92;
-  ctx.drawImage(img, ox, oy, img.width*s, img.height*s);
-  ctx.globalAlpha = 1;
-}
-
-function drawScaleLine() {
-  const [p1,p2] = State.scalePoints;
-  ctx.strokeStyle = '#ffd166';
-  ctx.lineWidth = 2;
-  ctx.setLineDash([6,4]);
-  ctx.beginPath(); ctx.moveTo(p1.x,p1.y); ctx.lineTo(p2.x,p2.y); ctx.stroke();
-  ctx.setLineDash([]);
-  [p1,p2].forEach(p=>{
-    ctx.fillStyle = '#ffd166';
-    ctx.beginPath(); ctx.arc(p.x,p.y,5,0,Math.PI*2); ctx.fill();
-  });
-  // midpoint label
-  const mx=(p1.x+p2.x)/2, my=(p1.y+p2.y)/2;
-  const dist = Math.hypot(p2.x-p1.x, p2.y-p1.y).toFixed(1);
-  drawLabel(mx, my-14, `${State.scaleReal}${State.scaleUnit} (${dist}px)`, '#ffd166');
-}
-
-function drawScalePoint() {
-  if(State.scalePoints.length === 1) {
-    const p = State.scalePoints[0];
-    ctx.fillStyle='#ffd166';
-    ctx.beginPath(); ctx.arc(p.x,p.y,5,0,Math.PI*2); ctx.fill();
-    ctx.strokeStyle='rgba(255,209,102,0.5)';
-    ctx.lineWidth=1; ctx.setLineDash([4,4]);
-    ctx.beginPath(); ctx.arc(p.x,p.y,12,0,Math.PI*2); ctx.stroke();
-    ctx.setLineDash([]);
-  }
-}
-
-function drawPolygon() {
-  const pts = State.points;
-  if(pts.length === 0) return;
-
-  // Fill
-  if(pts.length >= 3) {
-    ctx.beginPath();
-    ctx.moveTo(pts[0].x, pts[0].y);
-    pts.slice(1).forEach(p=>ctx.lineTo(p.x,p.y));
-    ctx.closePath();
-    ctx.fillStyle = 'rgba(0,212,170,0.08)';
-    ctx.fill();
-  }
-
-  // Sides
-  ctx.strokeStyle = '#00d4aa';
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(pts[0].x, pts[0].y);
-  pts.forEach((p,i)=>{
-    if(i>0) ctx.lineTo(p.x,p.y);
-  });
-  if(pts.length >= 3) ctx.closePath();
-  ctx.stroke();
-
-  // Vertices
-  pts.forEach((p,i)=>{
-    ctx.fillStyle = '#fff';
-    ctx.strokeStyle = '#00d4aa';
-    ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.arc(p.x,p.y,6,0,Math.PI*2); ctx.fill(); ctx.stroke();
-    // label
-    if(State.showLabels) {
-      const letter = String.fromCharCode(65+i);
-      drawLabel(p.x+10, p.y-10, letter, '#00d4aa', true);
-    }
-  });
-}
-
-function drawAngles() {
-  const pts = State.points;
-  if(!State.results || pts.length < 3) return;
-  const angles = State.results.angles;
-  const n = pts.length;
-
-  pts.forEach((p, i) => {
-    const prev = pts[(i - 1 + n) % n];
-    const next = pts[(i + 1) % n];
-
-    // Vectors from current vertex toward neighbours
-    const v1 = { x: prev.x - p.x, y: prev.y - p.y };
-    const v2 = { x: next.x - p.x, y: next.y - p.y };
-
-    const a1 = Math.atan2(v1.y, v1.x);
-    const a2 = Math.atan2(v2.y, v2.x);
-
-    // ── Arc ──
-    // We want the INTERIOR arc (the smaller one for convex vertices)
-    const arcR = 16;
-    ctx.strokeStyle = 'rgba(255,209,102,0.7)';
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-
-    // Normalize angles so we always draw the interior sweep
-    let start = a1, end = a2;
-    // Ensure [0, 2π) range
-    while(end < start) end += Math.PI * 2;
-    let sweep = end - start;
-    // If sweep > π we're drawing the exterior; flip
-    if(sweep > Math.PI) { const tmp = start; start = end - Math.PI * 2; end = tmp; sweep = Math.PI * 2 - sweep; }
-
-    ctx.arc(p.x, p.y, arcR, start, end);
-    ctx.stroke();
-
-    // ── Angle value label ──
-    // Place it along the bisector of the interior arc, a bit further out
-    const bisector = start + (end - start) / 2;
-    const labelR = arcR + 18;
-    const lx = p.x + Math.cos(bisector) * labelR;
-    const ly = p.y + Math.sin(bisector) * labelR;
-
-    if(angles && angles[i] !== undefined) {
-      // Draw a small circle background for clarity
-      const text = `${angles[i].toFixed(1)}°`;
-      ctx.font = 'bold 11px JetBrains Mono, monospace';
-      const tw = ctx.measureText(text).width;
-      const pad = 4;
-      // Background pill
-      ctx.fillStyle = 'rgba(10,14,26,0.82)';
-      ctx.beginPath();
-      ctx.roundRect
-        ? ctx.roundRect(lx - tw/2 - pad, ly - 9, tw + pad*2, 14, 4)
-        : ctx.rect(lx - tw/2 - pad, ly - 9, tw + pad*2, 14);
-      ctx.fill();
-      // Border
-      ctx.strokeStyle = 'rgba(255,209,102,0.45)';
-      ctx.lineWidth = 0.8;
-      ctx.stroke();
-      // Text
-      ctx.fillStyle = '#ffd166';
-      ctx.textAlign = 'center';
-      ctx.fillText(text, lx, ly + 2);
-      ctx.textAlign = 'left'; // restore default
-    }
-  });
-}
-
-function drawLabels() {
-  const pts = State.points;
-  const res = State.results;
-  if(!res || pts.length < 2) return;
-  // side length labels on each edge midpoint
-  const n = pts.length;
-  for(let i=0;i<n;i++){
-    const p1 = pts[i];
-    const p2 = pts[(i+1)%n];
-    const mx=(p1.x+p2.x)/2, my=(p1.y+p2.y)/2;
-    const len = res.sides[i];
-    if(len !== undefined) {
-      const dx=p2.x-p1.x, dy=p2.y-p1.y;
-      const norm = Math.hypot(dx,dy)||1;
-      const nx=-dy/norm*16, ny=dx/norm*16;
-      drawLabel(mx+nx, my+ny, `${len.toFixed(2)} ${State.scaleUnit}`, '#4f8eff');
-    }
-  }
-}
-
-function drawLabel(x, y, text, color='#fff', bold=false) {
-  ctx.font = `${bold?'bold ':''} 11px JetBrains Mono, monospace`;
-  const metrics = ctx.measureText(text);
-  const pw=4, ph=3;
-  ctx.fillStyle='rgba(10,14,26,0.75)';
-  ctx.fillRect(x-pw, y-12, metrics.width+pw*2, 16+ph);
-  ctx.fillStyle=color;
-  ctx.fillText(text, x, y);
-}
-
-// ═══════════════════════════════════════════════
-//  MODULE: GEOMETRY
-// ═══════════════════════════════════════════════
-const Geo = {
-  // Convert canvas px to real units
-  toReal(px) {
-    if(!State.scalePx || State.scalePx === 0) return px;
-    return (px / State.scalePx) * State.scaleReal;
-  },
-
-  // Shoelace formula (area in px²)
-  shoelace(pts) {
-    let area = 0;
-    const n = pts.length;
-    for(let i=0;i<n;i++) {
-      const j=(i+1)%n;
-      area += pts[i].x * pts[j].y;
-      area -= pts[j].x * pts[i].y;
-    }
-    return Math.abs(area)/2;
-  },
-
-  // Angle at vertex i (degrees)
-  interiorAngle(pts, i) {
-    const n = pts.length;
-    const prev = pts[(i-1+n)%n];
-    const curr = pts[i];
-    const next = pts[(i+1)%n];
-    const v1 = {x:prev.x-curr.x, y:prev.y-curr.y};
-    const v2 = {x:next.x-curr.x, y:next.y-curr.y};
-    const dot = v1.x*v2.x + v1.y*v2.y;
-    const mag1 = Math.hypot(v1.x,v1.y);
-    const mag2 = Math.hypot(v2.x,v2.y);
-    if(mag1===0||mag2===0) return 0;
-    let cos = dot/(mag1*mag2);
-    cos = Math.max(-1, Math.min(1, cos));
-    return Math.acos(cos) * 180/Math.PI;
-  },
-
-  analyze(pts) {
-    const n = pts.length;
-    if(n < 2) return null;
-
-    // Side lengths in px
-    const sidesPx = [];
-    for(let i=0;i<n;i++) {
-      const p1=pts[i], p2=pts[(i+1)%n];
-      sidesPx.push(Math.hypot(p2.x-p1.x, p2.y-p1.y));
-    }
-
-    // Convert to real
-    const sides = sidesPx.map(s => this.toReal(s));
-
-    // Angles
-    const angles = n >= 3 ? pts.map((_,i) => this.interiorAngle(pts,i)) : [];
-
-    // Perimeter
-    const perimeter = sides.reduce((a,b)=>a+b, 0);
-
-    // Area in px² → real²
-    const areaPx = n >= 3 ? this.shoelace(pts) : 0;
-    const area = State.scalePx ? areaPx * Math.pow(State.scaleReal/State.scalePx, 2) : areaPx;
-
-    // Angle sum expected
-    const expectedAngleSum = (n-2)*180;
-    const actualAngleSum = angles.reduce((a,b)=>a+b,0);
-
-    return { n, sides, sidesPx, angles, perimeter, area, expectedAngleSum, actualAngleSum };
-  },
-
-  classify(res) {
-    const { n, sides, angles } = res;
-    const tags = [];
-    let mainName = '';
-    let subName = '';
-
-    // Polygon name
-    const names = ['','','','Triângulo','Quadrilátero','Pentágono','Hexágono','Heptágono','Octógono','Eneágono','Decágono'];
-    mainName = names[n] || `Polígono de ${n} lados`;
-
-    // Regular?
-    const maxS = Math.max(...sides), minS = Math.min(...sides);
-    const isEquilateral = (maxS-minS)/maxS < 0.03;
-    const maxA = angles.length ? Math.max(...angles) : 0;
-    const minA = angles.length ? Math.min(...angles) : 0;
-    const isEquiangular = angles.length > 0 && (maxA-minA) < 2;
-
-    if(isEquilateral && isEquiangular) tags.push({t:'Regular',c:'tag-cyan'});
-
-    // Triangle classification
-    if(n===3) {
-      const eps = sides.reduce((a,b)=>a+b,0)*0.03;
-      const [a,b,c] = [...sides].sort((x,y)=>x-y);
-      if(maxS-minS < eps) { subName='Equilátero'; tags.push({t:'Equilátero',c:'tag-green'}); }
-      else {
-        const pairs = [[sides[0],sides[1]],[sides[1],sides[2]],[sides[0],sides[2]]];
-        const iso = pairs.filter(([x,y])=>Math.abs(x-y)<eps).length > 0;
-        if(iso) { subName='Isósceles'; tags.push({t:'Isósceles',c:'tag-blue'}); }
-        else { subName='Escaleno'; tags.push({t:'Escaleno',c:'tag-yellow'}); }
+  <script>
+    // ─────────────────────────────────────────────
+    //  STATE
+    // ─────────────────────────────────────────────
+    const S = {
+      tab: 'image',
+      mode: 'idle',
+      imageObj: null,
+      points: [],
+      scalePoints: [],
+      scalePx: null,
+      scaleReal: 10,
+      scaleUnit: 'cm',
+      results: null,
+      zoom: 1,
+      pan: {
+        x: 0,
+        y: 0
+      },
+      showGrid: true,
+      showLabels: true,
+      showAnglesCanvas: true,
+      imgOffX: 0,
+      imgOffY: 0,
+      imgScale: 1,
+      filters: {
+        showName: true,
+        showSides: true,
+        showAngles: true,
+        showPerim: true,
+        showArea: true,
+        showClass: true
       }
-      // Right angle?
-      const isRight = Math.abs(a*a+b*b - c*c) / (c*c) < 0.06;
-      if(isRight) { tags.push({t:'Retângulo',c:'tag-red'}); }
-      // Obtuse?
-      if(angles.length && Math.max(...angles) > 91) tags.push({t:'Obtusângulo',c:'tag-yellow'});
-      else if(angles.length && Math.max(...angles) < 89) tags.push({t:'Acutângulo',c:'tag-cyan'});
-    }
-
-    if(n===4) {
-      const [a,b,c,d] = sides;
-      const eps = (a+b+c+d)*0.03;
-      if(isEquilateral) { tags.push({t:'Losango/Quadrado',c:'tag-cyan'}); }
-      if(Math.abs(a-c)<eps && Math.abs(b-d)<eps) tags.push({t:'Paralelogramo',c:'tag-blue'});
-      if(angles.length && angles.every(ang=>Math.abs(ang-90)<4)) tags.push({t:'Retângulo',c:'tag-green'});
-    }
-
-    // Consistency checks
-    const consistent = [];
-    if(angles.length > 0) {
-      const angleErr = Math.abs(res.actualAngleSum - res.expectedAngleSum);
-      if(angleErr < 3) consistent.push({t:'✓ Soma ângulos OK',c:'tag-green'});
-      else consistent.push({t:`⚠ Soma ângulos ${res.actualAngleSum.toFixed(1)}° (esperado ${res.expectedAngleSum}°)`,c:'tag-red'});
-    }
-
-    // Largest side ↔ largest angle
-    if(angles.length > 0) {
-      const maxSideIdx = sides.indexOf(Math.max(...sides));
-      const maxAngIdx = angles.indexOf(Math.max(...angles));
-      if(maxSideIdx === maxAngIdx) consistent.push({t:'✓ Maior lado = maior ângulo',c:'tag-green'});
-      else consistent.push({t:'⚠ Maior lado ≠ maior ângulo',c:'tag-yellow'});
-    }
-
-    return { mainName, subName, tags, consistent };
-  }
-};
-
-// ═══════════════════════════════════════════════
-//  MODULE: IMAGE
-// ═══════════════════════════════════════════════
-function loadImage(evt) {
-  const file = evt.target.files[0];
-  if(!file) return;
-  const reader = new FileReader();
-  reader.onload = e => {
-    const img = new Image();
-    img.onload = () => {
-      State.imageObj = img;
-      State.image = e.target.result;
-      State.points = [];
-      State.scalePoints = [];
-      State.scalePx = null;
-      State.results = null;
-      fitImageToCanvas(img);
-      setMode('idle');
-      updateScaleStatus('idle','Imagem carregada — marque a escala');
-      updateMarkStatus();
-      hideResults();
-      render();
     };
-    img.src = e.target.result;
-  };
-  reader.readAsDataURL(file);
-}
+    // ─────────────────────────────────────────────
+    //  CANVAS
+    // ─────────────────────────────────────────────
+    const canvas = document.getElementById('main-canvas');
+    const ctx = canvas.getContext('2d');
 
-function fitImageToCanvas() {
-  const img = State.imageObj;
-  const W = canvas.width, H = canvas.height;
-  const scale = Math.min((W-40)/img.width, (H-40)/img.height, 1);
-  State.imgScale = scale;
-  State.imgOffX = (W - img.width*scale)/2;
-  State.imgOffY = (H - img.height*scale)/2;
-}
+    function resizeCanvas() {
+      const w = document.getElementById('canvas-wrap');
+      canvas.width = w.clientWidth || 800;
+      canvas.height = w.clientHeight || 520;
+      render();
+    }
+    // ─────────────────────────────────────────────
+    //  RENDER
+    // ─────────────────────────────────────────────
+    function render() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.save();
+      ctx.translate(S.pan.x, S.pan.y);
+      ctx.scale(S.zoom, S.zoom);
+      if (S.showGrid) drawGrid();
+      if (S.imageObj) drawImg();
+      if (S.scalePoints.length === 2) drawScaleLine();
+      drawScalePt();
+      if (S.points.length > 0) drawPolygon();
+      if (S.results && S.showLabels) drawSideLabels();
+      if (S.results && S.showAnglesCanvas) drawAngleLabels();
+      ctx.restore();
+    }
 
-// ═══════════════════════════════════════════════
-//  MODULE: MODES
-// ═══════════════════════════════════════════════
-function setMode(m) {
-  State.mode = m;
-  const texts = {
-    idle: 'Aguardando',
-    scale1: 'Marque o PRIMEIRO ponto de escala',
-    scale2: 'Marque o SEGUNDO ponto de escala',
-    mark: 'Clique para adicionar vértices',
-    manual: 'Clique para adicionar vértices',
-  };
-  setModeIndicator(texts[m]||m, m!=='idle');
-  document.querySelectorAll('.tool-btn, .btn').forEach(b=>b.classList.remove('active'));
-}
+    function drawGrid() {
+      const W = canvas.width,
+        H = canvas.height,
+        sz = 30,
+        iz = 1 / S.zoom;
+      const ox = -S.pan.x * iz,
+        oy = -S.pan.y * iz;
+      const cols = Math.ceil(W * iz / sz) + 2,
+        rows = Math.ceil(H * iz / sz) + 2;
+      const sx = Math.floor(ox / sz) * sz,
+        sy = Math.floor(oy / sz) * sz;
+      ctx.strokeStyle = 'rgba(0,80,200,.06)';
+      ctx.lineWidth = .5;
+      for (let i = 0; i < cols; i++) {
+        ctx.beginPath();
+        ctx.moveTo(sx + i * sz, sy);
+        ctx.lineTo(sx + i * sz, sy + rows * sz);
+        ctx.stroke();
+      }
+      for (let j = 0; j < rows; j++) {
+        ctx.beginPath();
+        ctx.moveTo(sx, sy + j * sz);
+        ctx.lineTo(sx + cols * sz, sy + j * sz);
+        ctx.stroke();
+      }
+      const bg = sz * 5,
+        bsx = Math.floor(ox / bg) * bg,
+        bsy = Math.floor(oy / bg) * bg;
+      const bc = Math.ceil(W * iz / bg) + 2,
+        br = Math.ceil(H * iz / bg) + 2;
+      ctx.strokeStyle = 'rgba(0,80,200,.13)';
+      ctx.lineWidth = .8;
+      for (let i = 0; i < bc; i++) {
+        ctx.beginPath();
+        ctx.moveTo(bsx + i * bg, bsy);
+        ctx.lineTo(bsx + i * bg, bsy + br * bg);
+        ctx.stroke();
+      }
+      for (let j = 0; j < br; j++) {
+        ctx.beginPath();
+        ctx.moveTo(bsx, bsy + j * bg);
+        ctx.lineTo(bsx + bc * bg, bsy + j * bg);
+        ctx.stroke();
+      }
+    }
 
-function setModeIndicator(text, active) {
-  document.getElementById('mode-text').textContent = text;
-  const dot = document.querySelector('#mode-indicator .status-dot');
-  dot.classList.toggle('pulse', active);
-}
+    function drawImg() {
+      ctx.globalAlpha = .95;
+      ctx.drawImage(S.imageObj, S.imgOffX, S.imgOffY, S.imageObj.width * S.imgScale, S.imageObj.height * S.imgScale);
+      ctx.globalAlpha = 1;
+    }
 
-function startScaleMode() {
-  if(!State.imageObj && State.tab==='image') { alert('Carregue uma imagem primeiro!'); return; }
-  State.scalePoints = [];
-  State.scalePx = null;
-  State.scaleReal = parseFloat(document.getElementById('scale-value').value)||10;
-  State.scaleUnit = document.getElementById('scale-unit').value;
-  setMode('scale1');
-  updateScaleStatus('active','Clique no 1º ponto de referência');
-  document.getElementById('sn1').classList.remove('done');
-  document.getElementById('sn2').classList.remove('done');
-}
+    function drawScaleLine() {
+      const [p1, p2] = S.scalePoints;
+      ctx.strokeStyle = '#d97706';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([6, 4]);
+      ctx.beginPath();
+      ctx.moveTo(p1.x, p1.y);
+      ctx.lineTo(p2.x, p2.y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      [p1, p2].forEach(p => {
+        ctx.fillStyle = '#d97706';
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 5, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      cLabel((p1.x + p2.x) / 2, (p1.y + p2.y) / 2 - 16, `${S.scaleReal} ${S.scaleUnit}`, '#d97706');
+    }
 
-function startMarkMode() {
-  if(!State.imageObj && State.tab==='image') { alert('Carregue uma imagem primeiro!'); return; }
-  if(!State.scalePx && State.tab==='image') {
-    if(!confirm('Escala não definida. Usar escala em pixels?')) return;
-  }
-  State.points = [];
-  State.results = null;
-  hideResults();
-  setMode('mark');
-  updateMarkStatus();
-  render();
-}
+    function drawScalePt() {
+      if (S.scalePoints.length === 1) {
+        const p = S.scalePoints[0];
+        ctx.fillStyle = '#d97706';
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
 
-function startManualMode() {
-  State.points = [];
-  State.results = null;
-  hideResults();
-  setMode('manual');
-  updateManualStatus();
-  render();
-}
+    function drawPolygon() {
+      const pts = S.points;
+      if (pts.length >= 3) {
+        ctx.beginPath();
+        ctx.moveTo(pts[0].x, pts[0].y);
+        pts.slice(1).forEach(p => ctx.lineTo(p.x, p.y));
+        ctx.closePath();
+        ctx.fillStyle = 'rgba(0,114,229,.07)';
+        ctx.fill();
+      }
+      ctx.strokeStyle = '#0072e5';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(pts[0].x, pts[0].y);
+      pts.forEach((p, i) => {
+        if (i > 0) ctx.lineTo(p.x, p.y);
+      });
+      if (pts.length >= 3) ctx.closePath();
+      ctx.stroke();
+      pts.forEach((p, i) => {
+        ctx.fillStyle = '#fff';
+        ctx.strokeStyle = '#0072e5';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 7, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        if (S.showLabels) cLabel(p.x + 11, p.y - 11, String.fromCharCode(65 + i), '#0072e5', true);
+      });
+    }
 
-function undoPoint() {
-  if(State.points.length > 0) {
-    State.points.pop();
-    updateMarkStatus();
-    updateManualStatus();
-    render();
-  }
-}
+    function drawSideLabels() {
+      if (!S.results || S.points.length < 2) return;
+      const pts = S.points,
+        n = pts.length;
+      for (let i = 0; i < n; i++) {
+        const p1 = pts[i],
+          p2 = pts[(i + 1) % n];
+        const mx = (p1.x + p2.x) / 2,
+          my = (p1.y + p2.y) / 2;
+        const dx = p2.x - p1.x,
+          dy = p2.y - p1.y,
+          nm = Math.hypot(dx, dy) || 1;
+        cLabel(mx - dy / nm * 18, my + dx / nm * 18, `${S.results.sides[i].toFixed(2)} ${S.scaleUnit}`, '#0072e5');
+      }
+    }
 
-// ═══════════════════════════════════════════════
-//  MODULE: CANVAS INTERACTION
-// ═══════════════════════════════════════════════
-function canvasCoords(e) {
-  const rect = canvas.getBoundingClientRect();
-  const raw = e.touches ? e.touches[0] : e;
-  const cx = (raw.clientX - rect.left);
-  const cy = (raw.clientY - rect.top);
-  // Account for zoom/pan
-  return {
-    x: (cx - State.pan.x) / State.zoom,
-    y: (cy - State.pan.y) / State.zoom,
-  };
-}
+    function drawAngleLabels() {
+      if (!S.results || S.points.length < 3) return;
+      const pts = S.points,
+        n = pts.length,
+        angles = S.results.angles;
+      pts.forEach((p, i) => {
+        const prev = pts[(i - 1 + n) % n],
+          next = pts[(i + 1) % n];
+        const a1 = Math.atan2(prev.y - p.y, prev.x - p.x),
+          a2 = Math.atan2(next.y - p.y, next.x - p.x);
+        let s = a1,
+          e = a2;
+        while (e < s) e += Math.PI * 2;
+        if (e - s > Math.PI) {
+          const t = s;
+          s = e - Math.PI * 2;
+          e = t;
+        }
+        ctx.strokeStyle = 'rgba(124,58,237,.7)';
+        ctx.lineWidth = 1.8;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 17, s, e);
+        ctx.stroke();
+        if (angles && angles[i] !== undefined) {
+          const bis = s + (e - s) / 2;
+          const lx = p.x + Math.cos(bis) * 38,
+            ly = p.y + Math.sin(bis) * 38;
+          const text = `${angles[i].toFixed(1)}°`;
+          ctx.font = 'bold 12px JetBrains Mono,monospace';
+          const tw = ctx.measureText(text).width,
+            pad = 5;
+          ctx.fillStyle = 'rgba(255,255,255,.94)';
+          ctx.strokeStyle = 'rgba(124,58,237,.45)';
+          ctx.lineWidth = 1.2;
+          ctx.beginPath();
+          if (ctx.roundRect) ctx.roundRect(lx - tw / 2 - pad, ly - 9, tw + pad * 2, 16, 4);
+          else ctx.rect(lx - tw / 2 - pad, ly - 9, tw + pad * 2, 16);
+          ctx.fill();
+          ctx.stroke();
+          ctx.fillStyle = '#7c3aed';
+          ctx.textAlign = 'center';
+          ctx.fillText(text, lx, ly + 3);
+          ctx.textAlign = 'left';
+        }
+      });
+    }
 
-canvas.addEventListener('mousemove', e => {
-  const p = canvasCoords(e);
-  document.getElementById('coord-display').textContent = `x: ${p.x.toFixed(0)}  y: ${p.y.toFixed(0)}`;
-});
+    function cLabel(x, y, text, color, bold = false) {
+      ctx.font = `${bold?'bold ':''} 12px JetBrains Mono,monospace`;
+      const tw = ctx.measureText(text).width,
+        pad = 4;
+      ctx.fillStyle = 'rgba(255,255,255,.9)';
+      ctx.strokeStyle = color;
+      ctx.lineWidth = .8;
+      if (ctx.roundRect) ctx.roundRect(x - pad, y - 12, tw + pad * 2, 16, 3);
+      else ctx.rect(x - pad, y - 12, tw + pad * 2, 16);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = color;
+      ctx.fillText(text, x, y);
+    }
+    // ─────────────────────────────────────────────
+    //  GEOMETRY
+    // ─────────────────────────────────────────────
+    const Geo = {
+      toReal(px) {
+        return S.scalePx ? (px / S.scalePx) * S.scaleReal : px;
+      },
+      shoelace(pts) {
+        let a = 0,
+          n = pts.length;
+        for (let i = 0; i < n; i++) {
+          const j = (i + 1) % n;
+          a += pts[i].x * pts[j].y - pts[j].x * pts[i].y;
+        }
+        return Math.abs(a) / 2;
+      },
+      angle(pts, i) {
+        const n = pts.length,
+          pr = pts[(i - 1 + n) % n],
+          cu = pts[i],
+          nx = pts[(i + 1) % n];
+        const v1 = {
+            x: pr.x - cu.x,
+            y: pr.y - cu.y
+          },
+          v2 = {
+            x: nx.x - cu.x,
+            y: nx.y - cu.y
+          };
+        const dot = v1.x * v2.x + v1.y * v2.y,
+          m1 = Math.hypot(v1.x, v1.y),
+          m2 = Math.hypot(v2.x, v2.y);
+        if (!m1 || !m2) return 0;
+        return Math.acos(Math.max(-1, Math.min(1, dot / (m1 * m2)))) * 180 / Math.PI;
+      },
+      analyze(pts) {
+        const n = pts.length;
+        if (n < 2) return null;
+        const sidesPx = [],
+          sides = [];
+        for (let i = 0; i < n; i++) {
+          const d = Math.hypot(pts[(i + 1) % n].x - pts[i].x, pts[(i + 1) % n].y - pts[i].y);
+          sidesPx.push(d);
+          sides.push(this.toReal(d));
+        }
+        const angles = n >= 3 ? pts.map((_, i) => this.angle(pts, i)) : [];
+        const perimeter = sides.reduce((a, b) => a + b, 0);
+        const areaPx = n >= 3 ? this.shoelace(pts) : 0;
+        const area = S.scalePx ? areaPx * Math.pow(S.scaleReal / S.scalePx, 2) : areaPx;
+        const expectedAngleSum = (n - 2) * 180,
+          actualAngleSum = angles.reduce((a, b) => a + b, 0);
+        return {
+          n,
+          sides,
+          sidesPx,
+          angles,
+          perimeter,
+          area,
+          expectedAngleSum,
+          actualAngleSum
+        };
+      },
+      classify(res) {
+        const {
+          n,
+          sides,
+          angles
+        } = res, tags = [];
+        const nm = ['', '', '', 'Triângulo', 'Quadrilátero', 'Pentágono', 'Hexágono', 'Heptágono', 'Octógono', 'Eneágono', 'Decágono'];
+        let mainName = nm[n] || `Polígono de ${n} lados`,
+          subName = '';
+        const maxS = Math.max(...sides),
+          minS = Math.min(...sides);
+        const isEL = (maxS - minS) / maxS < 0.04;
+        const maxA = angles.length ? Math.max(...angles) : 0,
+          minA = angles.length ? Math.min(...angles) : 0;
+        if (isEL && angles.length && (maxA - minA) < 3) tags.push({
+          t: 'Regular',
+          c: 'tag-teal'
+        });
+        if (n === 3) {
+          const eps = sides.reduce((a, b) => a + b, 0) * 0.04;
+          if (maxS - minS < eps) {
+            subName = 'Equilátero';
+            tags.push({
+              t: 'Equilátero',
+              c: 'tag-green'
+            });
+          } else {
+            const iso = [
+              [0, 1],
+              [1, 2],
+              [0, 2]
+            ].some(([a, b]) => Math.abs(sides[a] - sides[b]) < eps);
+            if (iso) {
+              subName = 'Isósceles';
+              tags.push({
+                t: 'Isósceles',
+                c: 'tag-blue'
+              });
+            } else {
+              subName = 'Escaleno';
+              tags.push({
+                t: 'Escaleno',
+                c: 'tag-orange'
+              });
+            }
+          }
+          const [a, b, c] = [...sides].sort((x, y) => x - y);
+          if (Math.abs(a * a + b * b - c * c) / (c * c) < 0.07) tags.push({
+            t: 'Retângulo',
+            c: 'tag-red'
+          });
+          if (angles.length && maxA > 91) tags.push({
+            t: 'Obtusângulo',
+            c: 'tag-orange'
+          });
+          else if (angles.length && maxA < 89) tags.push({
+            t: 'Acutângulo',
+            c: 'tag-teal'
+          });
+        }
+        if (n === 4) {
+          const eps = (sides[0] + sides[1] + sides[2] + sides[3]) * 0.04;
+          if (isEL) tags.push({
+            t: 'Losango/Quadrado',
+            c: 'tag-teal'
+          });
+          if (Math.abs(sides[0] - sides[2]) < eps && Math.abs(sides[1] - sides[3]) < eps) tags.push({
+            t: 'Paralelogramo',
+            c: 'tag-blue'
+          });
+          if (angles.length && angles.every(a => Math.abs(a - 90) < 5)) tags.push({
+            t: 'Retângulo',
+            c: 'tag-green'
+          });
+        }
+        const consistent = [];
+        if (angles.length) {
+          const err = Math.abs(res.actualAngleSum - res.expectedAngleSum);
+          consistent.push(err < 4 ? {
+            t: '✓ Soma ângulos OK',
+            c: 'tag-green'
+          } : {
+            t: `⚠ Soma ${res.actualAngleSum.toFixed(1)}° ≠ ${res.expectedAngleSum}°`,
+            c: 'tag-red'
+          });
+          const mi = sides.indexOf(Math.max(...sides)),
+            ai = angles.indexOf(Math.max(...angles));
+          consistent.push(mi === ai ? {
+            t: '✓ Maior lado = maior ângulo',
+            c: 'tag-green'
+          } : {
+            t: '⚠ Maior lado ≠ maior ângulo',
+            c: 'tag-orange'
+          });
+        }
+        return {
+          mainName,
+          subName,
+          tags,
+          consistent
+        };
+      }
+    };
+    // ─────────────────────────────────────────────
+    //  ML DETECTION  (TensorFlow.js + Sobel + Hull + Douglas-Peucker)
+    // ─────────────────────────────────────────────
+    async function runMLDetect() {
+      if (!S.imageObj) {
+        alert('Carregue uma imagem primeiro!');
+        return;
+      }
+      const btn = document.getElementById('btn-ml');
+      const stEl = document.getElementById('ml-status');
+      const bar = document.getElementById('ml-bar');
+      const calcBtn = document.getElementById('btn-ml-calc');
 
-canvas.addEventListener('click', e => {
-  const p = canvasCoords(e);
-  if(State.mode === 'scale1') {
-    State.scalePoints = [p];
-    setMode('scale2');
-    updateScaleStatus('active','Clique no 2º ponto de referência');
-    document.getElementById('sn1').classList.add('done');
-    render();
-  } else if(State.mode === 'scale2') {
-    State.scalePoints.push(p);
-    State.scalePx = Math.hypot(p.x-State.scalePoints[0].x, p.y-State.scalePoints[0].y);
-    State.scaleReal = parseFloat(document.getElementById('scale-value').value)||10;
-    State.scaleUnit = document.getElementById('scale-unit').value;
-    setMode('idle');
-    updateScaleStatus('active',`Escala: 1px = ${(State.scaleReal/State.scalePx).toFixed(4)} ${State.scaleUnit}`);
-    document.getElementById('sn2').classList.add('done');
-    render();
-  } else if(State.mode === 'mark' || State.mode === 'manual') {
-    State.points.push(p);
-    updateMarkStatus();
-    updateManualStatus();
-    render();
-  }
-});
+      function stML(cls, msg, pct = 0) {
+        stEl.className = `status-bar ${cls}`;
+        stEl.querySelector('.sdot').classList.toggle('pulse', cls === 's-purple');
+        stEl.querySelector('span').textContent = msg;
+        bar.style.width = pct + '%';
+      }
+      btn.disabled = true;
+      stML('s-purple', 'Inicializando TensorFlow.js…', 10);
+      try {
+        await tf.ready();
+        stML('s-purple', 'Pré-processando imagem…', 25);
+        // Down-scale para velocidade
+        const maxDim = 512;
+        const sc = Math.min(maxDim / S.imageObj.width, maxDim / S.imageObj.height, 1);
+        const oc = document.createElement('canvas');
+        oc.width = Math.round(S.imageObj.width * sc);
+        oc.height = Math.round(S.imageObj.height * sc);
+        oc.getContext('2d').drawImage(S.imageObj, 0, 0, oc.width, oc.height);
+        const id = oc.getContext('2d').getImageData(0, 0, oc.width, oc.height);
+        stML('s-purple', 'Aplicando filtro Sobel (detecção de bordas)…', 45);
+        await new Promise(r => setTimeout(r, 20));
+        const edgeData = await tf.tidy(() => {
+          const t = tf.browser.fromPixels({
+            data: id.data,
+            width: oc.width,
+            height: oc.height
+          }).toFloat().div(255);
+          const gray = t.mul([0.299, 0.587, 0.114]).sum(-1, true);
+          const kx = tf.tensor2d([
+            [-1, 0, 1],
+            [-2, 0, 2],
+            [-1, 0, 1]
+          ]).reshape([3, 3, 1, 1]);
+          const ky = tf.tensor2d([
+            [-1, -2, -1],
+            [0, 0, 0],
+            [1, 2, 1]
+          ]).reshape([3, 3, 1, 1]);
+          const g4 = gray.expandDims(0);
+          return tf.conv2d(g4, kx, [1, 1], 'same').squeeze().square()
+            .add(tf.conv2d(g4, ky, [1, 1], 'same').squeeze().square())
+            .sqrt();
+        }).array();
+        stML('s-purple', 'Extraindo contorno da figura…', 65);
+        await new Promise(r => setTimeout(r, 20));
+        const W = oc.width,
+          H = oc.height;
+        let mx = 0;
+        for (let y = 0; y < H; y++)
+          for (let x = 0; x < W; x++) mx = Math.max(mx, edgeData[y][x]);
+        const thr = mx * 0.3;
+        const epts = [];
+        for (let y = 2; y < H - 2; y++)
+          for (let x = 2; x < W - 2; x++)
+            if (edgeData[y][x] > thr) epts.push({
+              x,
+              y
+            });
+        if (!epts.length) {
+          stML('s-error', 'Nenhuma borda encontrada.', 0);
+          btn.disabled = false;
+          return;
+        }
+        stML('s-purple', 'Calculando casco convexo…', 78);
+        await new Promise(r => setTimeout(r, 15));
+        const hull = convexHull(epts);
+        stML('s-purple', 'Simplificando com Douglas-Peucker…', 88);
+        await new Promise(r => setTimeout(r, 15));
+        const eps2 = Math.max(W, H) * 0.055;
+        const simp = douglasPeucker(hull, eps2);
+        // Map downscaled → canvas coords
+        S.points = simp.map(p => ({
+          x: (p.x / sc) * S.imgScale + S.imgOffX,
+          y: (p.y / sc) * S.imgScale + S.imgOffY
+        }));
+        stML('s-active', `✓ ${S.points.length} vértices detectados`, 100);
+        calcBtn.style.display = 'block';
+        updateMarkStatus();
+        render();
+      } catch (err) {
+        console.error(err);
+        stML('s-error', 'Erro: ' + err.message, 0);
+      }
+      btn.disabled = false;
+    }
 
-canvas.addEventListener('touchstart', e => {
-  e.preventDefault();
-  canvas.dispatchEvent(new MouseEvent('click', {
-    clientX: e.touches[0].clientX,
-    clientY: e.touches[0].clientY,
-  }));
-}, {passive:false});
+    function convexHull(pts) {
+      if (pts.length < 3) return pts;
+      const s = [...pts].sort((a, b) => a.x === b.x ? a.y - b.y : a.x - b.x);
+      const cross = (o, a, b) => (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x);
+      const lo = [];
+      for (const p of s) {
+        while (lo.length >= 2 && cross(lo[lo.length - 2], lo[lo.length - 1], p) <= 0) lo.pop();
+        lo.push(p);
+      }
+      const hi = [];
+      for (let i = s.length - 1; i >= 0; i--) {
+        const p = s[i];
+        while (hi.length >= 2 && cross(hi[hi.length - 2], hi[hi.length - 1], p) <= 0) hi.pop();
+        hi.push(p);
+      }
+      hi.pop();
+      lo.pop();
+      return lo.concat(hi);
+    }
 
-// ═══════════════════════════════════════════════
-//  MODULE: CALCULATE & SHOW
-// ═══════════════════════════════════════════════
-function calculateAndShow() {
-  const pts = State.points;
-  if(pts.length < 3) { alert('Marque pelo menos 3 vértices!'); return; }
+    function douglasPeucker(pts, eps) {
+      if (pts.length <= 2) return pts;
+      let md = 0,
+        mi = 0;
+      const f = pts[0],
+        l = pts[pts.length - 1];
+      for (let i = 1; i < pts.length - 1; i++) {
+        const d = ptLineDist(pts[i], f, l);
+        if (d > md) {
+          md = d;
+          mi = i;
+        }
+      }
+      if (md > eps) {
+        const L = douglasPeucker(pts.slice(0, mi + 1), eps);
+        const R = douglasPeucker(pts.slice(mi), eps);
+        return L.slice(0, -1).concat(R);
+      }
+      return [f, l];
+    }
 
-  // Roda a análise geométrica
-  const res = Geo.analyze(pts);
-  const cls = Geo.classify(res);
-  res.classification = cls;
-  State.results = res;
+    function ptLineDist(p, a, b) {
+      const dx = b.x - a.x,
+        dy = b.y - a.y;
+      if (!dx && !dy) return Math.hypot(p.x - a.x, p.y - a.y);
+      return Math.abs(dy * p.x - dx * p.y + b.x * a.y - b.y * a.x) / Math.hypot(dx, dy);
+    }
+    // ─────────────────────────────────────────────
+    //  IMAGE LOAD
+    // ─────────────────────────────────────────────
+    function loadImage(e) {
+      const f = e.target.files[0];
+      if (!f) return;
+      const r = new FileReader();
+      r.onload = ev => {
+        const img = new Image();
+        img.onload = () => {
+          S.imageObj = img;
+          S.points = [];
+          S.scalePoints = [];
+          S.scalePx = null;
+          S.results = null;
+          fitImg();
+          setMode('idle');
+          setStatus('scale-status', 's-idle', 'Imagem carregada — defina a escala');
+          updateMarkStatus();
+          hideResults();
+          document.getElementById('btn-ml-calc').style.display = 'none';
+          resetML();
+          render();
+        };
+        img.src = ev.target.result;
+      };
+      r.readAsDataURL(f);
+    }
 
-  // Always show angles after calculation
-  State.showAngles = true;
-  State.showLabels = true;
-  document.getElementById('tool-angles').classList.add('active');
-  document.getElementById('tool-labels').classList.add('active');
+    function fitImg() {
+      const img = S.imageObj,
+        W = canvas.width,
+        H = canvas.height;
+      const sc = Math.min((W - 40) / img.width, (H - 40) / img.height, 1);
+      S.imgScale = sc;
+      S.imgOffX = (W - img.width * sc) / 2;
+      S.imgOffY = (H - img.height * sc) / 2;
+    }
+    // ─────────────────────────────────────────────
+    //  MODES
+    // ─────────────────────────────────────────────
+    function setMode(m) {
+      S.mode = m;
+      const L = {
+        idle: 'Aguardando',
+        scale1: '1º ponto de escala',
+        scale2: '2º ponto de escala',
+        mark: 'Adicionando vértices',
+        manual: 'Adicionando vértices'
+      };
+      document.getElementById('mode-text').textContent = L[m] || m;
+      document.getElementById('mode-dot').classList.toggle('pulse', m !== 'idle');
+    }
 
-  render();
-  showResults(res, cls);
-  updateCanvasInfo(res, cls);
-}
+    function startScaleMode() {
+      if (!S.imageObj && S.tab === 'image') {
+        alert('Carregue uma imagem primeiro!');
+        return;
+      }
+      S.scalePoints = [];
+      S.scalePx = null;
+      S.scaleReal = parseFloat(document.getElementById('scale-value').value) || 10;
+      S.scaleUnit = document.getElementById('scale-unit').value;
+      setMode('scale1');
+      setStatus('scale-status', 's-warn', 'Clique no 1º ponto de referência');
+      document.getElementById('sn1').classList.remove('done');
+      document.getElementById('sn2').classList.remove('done');
+    }
 
-function showResults(res, cls) {
-  document.getElementById('results-section').style.display = 'block';
-  document.getElementById('results-section').classList.add('fadeIn');
+    function startMarkMode() {
+      if (!S.imageObj && S.tab === 'image') {
+        alert('Carregue uma imagem primeiro!');
+        return;
+      }
+      S.points = [];
+      S.results = null;
+      hideResults();
+      setMode('mark');
+      updateMarkStatus();
+      render();
+    }
 
-  // Badge
-  document.getElementById('figure-badge-wrap').innerHTML = `
-    <div class="figure-badge">
-      <div class="name">${cls.mainName}${cls.subName?' '+cls.subName:''}</div>
-      <div class="sub">${res.n} lados · ${res.angles.length} ângulos</div>
-    </div>`;
+    function startManualMode() {
+      S.points = [];
+      S.results = null;
+      hideResults();
+      setMode('manual');
+      updateManualStatus();
+      render();
+    }
 
-  // Measures
-  document.getElementById('results-measures').innerHTML = `
-    <div class="result-item">
-      <span class="result-label">Figura</span>
-      <span class="result-value highlight">${cls.mainName}</span>
-    </div>
-    <div class="result-item">
-      <span class="result-label">Nº de lados</span>
-      <span class="result-value">${res.n}</span>
-    </div>
-    <div class="result-item">
-      <span class="result-label">Perímetro</span>
-      <span class="result-value highlight2">${res.perimeter.toFixed(2)} ${State.scaleUnit}</span>
-    </div>
-    <div class="result-item">
-      <span class="result-label">Área</span>
-      <span class="result-value highlight3">${res.area.toFixed(2)} ${State.scaleUnit}²</span>
-    </div>
-    <div class="result-item">
-      <span class="result-label">Soma ângulos</span>
-      <span class="result-value">${res.actualAngleSum.toFixed(1)}° <small style="color:var(--text3)">(esp: ${res.expectedAngleSum}°)</small></span>
-    </div>`;
-
-  // Classification
-  const tagsHtml = [...cls.tags, ...cls.consistent].map(t=>`<span class="tag ${t.c}">${t.t}</span>`).join('');
-  document.getElementById('results-classification').innerHTML = `<div class="tag-list">${tagsHtml||'<span class="tag tag-blue">Polígono</span>'}</div>`;
-
-  // Details
-  let detailHtml = '<table class="side-table"><thead><tr><th>Lado</th><th>Comprimento</th></tr></thead><tbody>';
-  res.sides.forEach((s,i)=>{
-    const l1 = String.fromCharCode(65+i), l2 = String.fromCharCode(65+(i+1)%res.n);
-    detailHtml += `<tr><td style="color:var(--accent)">${l1}${l2}</td><td style="color:var(--text)">${s.toFixed(2)} ${State.scaleUnit}</td></tr>`;
-  });
-  detailHtml += '</tbody></table>';
-
-  if(res.angles.length > 0) {
-    detailHtml += '<div style="margin-top:10px"><table class="side-table"><thead><tr><th>Vértice</th><th>Ângulo</th></tr></thead><tbody>';
-    res.angles.forEach((a,i)=>{
-      detailHtml += `<tr><td style="color:var(--accent4)">${String.fromCharCode(65+i)}</td><td style="color:var(--text)">${a.toFixed(2)}°</td></tr>`;
+    function undoPoint() {
+      if (S.points.length) {
+        S.points.pop();
+        updateMarkStatus();
+        updateManualStatus();
+        render();
+      }
+    }
+    // ─────────────────────────────────────────────
+    //  CANVAS EVENTS
+    // ─────────────────────────────────────────────
+    function cvCoords(e) {
+      const r = canvas.getBoundingClientRect(),
+        raw = e.touches ? e.touches[0] : e;
+      return {
+        x: (raw.clientX - r.left - S.pan.x) / S.zoom,
+        y: (raw.clientY - r.top - S.pan.y) / S.zoom
+      };
+    }
+    canvas.addEventListener('mousemove', e => {
+      const p = cvCoords(e);
+      document.getElementById('coord-display').innerHTML = `x: ${p.x.toFixed(0)} &nbsp; y: ${p.y.toFixed(0)}`;
     });
-    detailHtml += '</tbody></table></div>';
-  }
-  document.getElementById('results-details').innerHTML = detailHtml;
-}
+    canvas.addEventListener('click', e => {
+      const p = cvCoords(e);
+      if (S.mode === 'scale1') {
+        S.scalePoints = [p];
+        setMode('scale2');
+        setStatus('scale-status', 's-warn', 'Clique no 2º ponto de referência');
+        document.getElementById('sn1').classList.add('done');
+        render();
+      } else if (S.mode === 'scale2') {
+        S.scalePoints.push(p);
+        S.scalePx = Math.hypot(p.x - S.scalePoints[0].x, p.y - S.scalePoints[0].y);
+        S.scaleReal = parseFloat(document.getElementById('scale-value').value) || 10;
+        S.scaleUnit = document.getElementById('scale-unit').value;
+        setMode('idle');
+        setStatus('scale-status', 's-active', `Escala: 1px = ${(S.scaleReal/S.scalePx).toFixed(4)} ${S.scaleUnit}`);
+        document.getElementById('sn2').classList.add('done');
+        render();
+      } else if (S.mode === 'mark' || S.mode === 'manual') {
+        S.points.push(p);
+        updateMarkStatus();
+        updateManualStatus();
+        render();
+      }
+    });
+    canvas.addEventListener('touchstart', e => {
+      e.preventDefault();
+      canvas.dispatchEvent(new MouseEvent('click', {
+        clientX: e.touches[0].clientX,
+        clientY: e.touches[0].clientY
+      }));
+    }, {
+      passive: false
+    });
+    canvas.addEventListener('wheel', e => {
+      e.preventDefault();
+      const r = canvas.getBoundingClientRect(),
+        cx = e.clientX - r.left,
+        cy = e.clientY - r.top;
+      const f = e.deltaY < 0 ? 1.12 : 1 / 1.12;
+      S.pan.x = cx - (cx - S.pan.x) * f;
+      S.pan.y = cy - (cy - S.pan.y) * f;
+      S.zoom = Math.max(.2, Math.min(8, S.zoom * f));
+      render();
+    }, {
+      passive: false
+    });
+    let ps = null;
+    canvas.addEventListener('mousedown', e => {
+      if (e.button === 2) ps = {
+        x: e.clientX - S.pan.x,
+        y: e.clientY - S.pan.y
+      };
+    });
+    canvas.addEventListener('mousemove', e => {
+      if (ps) {
+        S.pan = {
+          x: e.clientX - ps.x,
+          y: e.clientY - ps.y
+        };
+        render();
+      }
+    });
+    canvas.addEventListener('mouseup', () => ps = null);
+    canvas.addEventListener('contextmenu', e => e.preventDefault());
+    // ─────────────────────────────────────────────
+    //  CALCULATE
+    // ─────────────────────────────────────────────
+    function calculateAndShow() {
+      if (S.points.length < 3) {
+        alert('Marque pelo menos 3 vértices!');
+        return;
+      }
+      const res = Geo.analyze(S.points),
+        cls = Geo.classify(res);
+      res.classification = cls;
+      S.results = res;
+      S.showAnglesCanvas = true;
+      S.showLabels = true;
+      document.getElementById('tool-angles').classList.add('active');
+      document.getElementById('tool-labels').classList.add('active');
+      render();
+      showResults(res, cls);
+      document.getElementById('canvas-info').textContent =
+        `${cls.mainName} · P=${res.perimeter.toFixed(1)} ${S.scaleUnit} · A=${res.area.toFixed(1)} ${S.scaleUnit}²`;
+    }
+    // ─────────────────────────────────────────────
+    //  RESULTS
+    // ─────────────────────────────────────────────
+    function showResults(res, cls) {
+      document.getElementById('results-section').style.display = 'block';
+      document.getElementById('figure-badge-wrap').innerHTML = `
+    <div class="figure-badge">
+      <div class="fname">${cls.mainName}${cls.subName?' — '+cls.subName:''}</div>
+      <div class="fsub">${res.n} lados · ${res.angles.length} ângulos internos</div>
+    </div>`;
+      refreshBlocks(res, cls);
+    }
 
-function hideResults() {
-  document.getElementById('results-section').style.display = 'none';
-}
+    function refreshBlocks(res, cls) {
+      const f = S.filters;
+      // Measures
+      const bm = document.getElementById('block-measures');
+      if (!f.showName && !f.showPerim && !f.showArea) {
+        bm.style.display = 'none';
+      } else {
+        bm.style.display = 'block';
+        let h = '';
+        if (f.showName) h += `<div class="result-item"><span class="rl">Figura</span><span class="rv ac">${cls.mainName}</span></div>`;
+        h += `<div class="result-item"><span class="rl">Nº de lados</span><span class="rv">${res.n}</span></div>`;
+        if (f.showPerim) h += `<div class="result-item"><span class="rl">Perímetro</span><span class="rv gr">${res.perimeter.toFixed(2)} ${S.scaleUnit}</span></div>`;
+        if (f.showArea) h += `<div class="result-item"><span class="rl">Área</span><span class="rv or">${res.area.toFixed(2)} ${S.scaleUnit}²</span></div>`;
+        if (f.showAngles) h += `<div class="result-item"><span class="rl">Soma ângulos</span><span class="rv">${res.actualAngleSum.toFixed(1)}° <span style="color:var(--text3);font-size:12px">(esp: ${res.expectedAngleSum}°)</span></span></div>`;
+        document.getElementById('results-measures').innerHTML = h;
+      }
+      // Classification
+      const bc = document.getElementById('block-class');
+      if (!f.showClass) {
+        bc.style.display = 'none';
+      } else {
+        bc.style.display = 'block';
+        const th = [...cls.tags, ...cls.consistent].map(t => `<span class="tag ${t.c}">${t.t}</span>`).join('');
+        document.getElementById('results-class').innerHTML = `<div class="tag-list">${th||'<span class="tag tag-blue">Polígono</span>'}</div>`;
+      }
+      // Details
+      const bd = document.getElementById('block-details');
+      if (!f.showSides && !f.showAngles) {
+        bd.style.display = 'none';
+        return;
+      }
+      bd.style.display = 'block';
+      let h = '';
+      if (f.showSides) {
+        h += `<p style="font-size:13px;font-weight:700;color:var(--text3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em">📏 Comprimento dos Lados</p>`;
+        h += `<table class="res-table"><thead><tr><th>Lado</th><th>Comprimento</th></tr></thead><tbody>`;
+        res.sides.forEach((s, i) => {
+          const l1 = String.fromCharCode(65 + i),
+            l2 = String.fromCharCode(65 + (i + 1) % res.n);
+          h += `<tr><td style="color:var(--accent);font-weight:700;font-size:15px">${l1}${l2}</td><td style="font-family:'JetBrains Mono',monospace;font-weight:600;font-size:14px">${s.toFixed(2)} ${S.scaleUnit}</td></tr>`;
+        });
+        h += `</tbody></table>`;
+      }
+      if (f.showAngles && res.angles.length) {
+        h += `<p style="font-size:13px;font-weight:700;color:var(--text3);margin:16px 0 8px;text-transform:uppercase;letter-spacing:.06em">∠ Ângulos Internos</p>`;
+        h += `<table class="res-table"><thead><tr><th>Vértice</th><th>Ângulo</th></tr></thead><tbody>`;
+        res.angles.forEach((a, i) => {
+          h += `<tr><td style="color:var(--accent5);font-weight:700;font-size:15px">${String.fromCharCode(65+i)}</td><td style="font-family:'JetBrains Mono',monospace;font-weight:600;font-size:14px">${a.toFixed(2)}°</td></tr>`;
+        });
+        h += `</tbody></table>`;
+      }
+      document.getElementById('results-details').innerHTML = h;
+    }
 
-function updateCanvasInfo(res, cls) {
-  document.getElementById('canvas-info').textContent =
-    `${cls.mainName} · P=${res.perimeter.toFixed(1)}${State.scaleUnit} · A=${res.area.toFixed(1)}${State.scaleUnit}²`;
-}
+    function hideResults() {
+      document.getElementById('results-section').style.display = 'none';
+    }
+    // ─────────────────────────────────────────────
+    //  FILTER TOGGLE
+    // ─────────────────────────────────────────────
+    function toggleFilter(label) {
+      label.classList.toggle('checked');
+      const checked = label.classList.contains('checked');
+      label.querySelector('.fcheck').textContent = checked ? '✓' : '';
+      S.filters[label.dataset.key] = checked;
+      if (S.results) refreshBlocks(S.results, S.results.classification);
+    }
+    // ─────────────────────────────────────────────
+    //  UI HELPERS
+    // ─────────────────────────────────────────────
+    function setStatus(id, cls, msg) {
+      const el = document.getElementById(id);
+      el.className = `status-bar ${cls}`;
+      el.querySelector('.sdot').classList.toggle('pulse', cls === 's-active' || cls === 's-warn' || cls === 's-purple');
+      el.querySelector('span').textContent = msg;
+    }
 
-// ═══════════════════════════════════════════════
-//  MODULE: UI HELPERS
-// ═══════════════════════════════════════════════
-function updateScaleStatus(type, msg) {
-  const el = document.getElementById('scale-status');
-  el.className = `status-bar status-${type}`;
-  const dot = el.querySelector('.status-dot');
-  dot.classList.toggle('pulse', type==='active');
-  el.querySelector('span').textContent = msg;
-}
+    function updateMarkStatus() {
+      const n = S.points.length,
+        el = document.getElementById('mark-status');
+      if (!el) return;
+      setStatus('mark-status', n > 0 ? 's-active' : 's-idle', `${n} vértice${n!==1?'s':''} marcado${n!==1?'s':''}`);
+    }
 
-function updateMarkStatus() {
-  const n = State.points.length;
-  const el = document.getElementById('mark-status');
-  if(!el) return;
-  el.className = `status-bar ${n>0?'status-active':'status-idle'}`;
-  el.querySelector('span').textContent = `${n} vértice${n!==1?'s':''} marcado${n!==1?'s':''}`;
-  el.querySelector('.status-dot').classList.toggle('pulse', n>0);
-}
+    function updateManualStatus() {
+      const n = S.points.length,
+        el = document.getElementById('manual-status');
+      if (!el) return;
+      setStatus('manual-status', n > 0 ? 's-active' : 's-idle', `${n} vértice${n!==1?'s':''}`);
+    }
 
-function updateManualStatus() {
-  const n = State.points.length;
-  const el = document.getElementById('manual-status');
-  if(!el) return;
-  el.className = `status-bar ${n>0?'status-active':'status-idle'}`;
-  el.querySelector('span').textContent = `${n} vértice${n!==1?'s':''}`;
-  el.querySelector('.status-dot').classList.toggle('pulse', n>0);
-}
+    function resetML() {
+      document.getElementById('ml-bar').style.width = '0%';
+      setStatus('ml-status', 's-idle', 'Pronto para detectar');
+    }
 
-function clearAll() {
-  State.imageObj = null; State.image = null;
-  State.points = []; State.scalePoints = []; State.scalePx = null; State.results = null;
-  setMode('idle');
-  hideResults();
-  updateScaleStatus('idle','Aguardando imagem...');
-  updateMarkStatus();
-  updateManualStatus();
-  document.getElementById('canvas-info').textContent = 'Nenhuma figura';
-  document.getElementById('sn1').classList.remove('done');
-  document.getElementById('sn2').classList.remove('done');
-  // Reset file input so the same file can be re-selected after clearing
-  const inp = document.getElementById('img-upload');
-  if(inp) inp.value = '';
-  render();
-}
+    function clearAll() {
+      S.imageObj = null;
+      S.points = [];
+      S.scalePoints = [];
+      S.scalePx = null;
+      S.results = null;
+      setMode('idle');
+      hideResults();
+      setStatus('scale-status', 's-idle', 'Aguardando imagem...');
+      updateMarkStatus();
+      updateManualStatus();
+      resetML();
+      document.getElementById('btn-ml-calc').style.display = 'none';
+      document.getElementById('canvas-info').textContent = 'Nenhuma figura';
+      document.getElementById('sn1').classList.remove('done');
+      document.getElementById('sn2').classList.remove('done');
+      const inp = document.getElementById('img-upload');
+      if (inp) inp.value = '';
+      render();
+    }
+    // ─────────────────────────────────────────────
+    //  TABS
+    // ─────────────────────────────────────────────
+    function switchTab(tab) {
+      S.tab = tab;
+      document.getElementById('content-image').style.display = tab === 'image' ? 'flex' : 'none';
+      document.getElementById('content-manual').style.display = tab === 'manual' ? 'flex' : 'none';
+      document.getElementById('tab-image').classList.toggle('active', tab === 'image');
+      document.getElementById('tab-manual').classList.toggle('active', tab === 'manual');
+      clearAll();
+    }
+    // ─────────────────────────────────────────────
+    //  CANVAS TOOLS
+    // ─────────────────────────────────────────────
+    function toggleGrid() {
+      S.showGrid = !S.showGrid;
+      document.getElementById('tool-grid').classList.toggle('active', S.showGrid);
+      render();
+    }
 
-// ═══════════════════════════════════════════════
-//  MODULE: TABS
-// ═══════════════════════════════════════════════
-function switchTab(tab) {
-  State.tab = tab;
-  document.getElementById('content-image').style.display = tab==='image'?'flex':'none';
-  if(tab==='image') document.getElementById('content-image').style.flexDirection='column';
-  document.getElementById('content-image').style.gap = '16px';
-  document.getElementById('content-manual').style.display = tab==='manual'?'flex':'none';
-  if(tab==='manual') document.getElementById('content-manual').style.flexDirection='column';
-  document.getElementById('content-manual').style.gap = '16px';
-  document.getElementById('tab-image').classList.toggle('active', tab==='image');
-  document.getElementById('tab-manual').classList.toggle('active', tab==='manual');
-  clearAll();
-}
+    function toggleLabels() {
+      S.showLabels = !S.showLabels;
+      document.getElementById('tool-labels').classList.toggle('active', S.showLabels);
+      render();
+    }
 
-// ═══════════════════════════════════════════════
-//  MODULE: TOOLS
-// ═══════════════════════════════════════════════
-function toggleGrid() {
-  State.showGrid = !State.showGrid;
-  document.getElementById('tool-grid').classList.toggle('active', State.showGrid);
-  render();
-}
+    function toggleAnglesDisplay() {
+      S.showAnglesCanvas = !S.showAnglesCanvas;
+      document.getElementById('tool-angles').classList.toggle('active', S.showAnglesCanvas);
+      render();
+    }
 
-function toggleLabels() {
-  State.showLabels = !State.showLabels;
-  document.getElementById('tool-labels').classList.toggle('active', State.showLabels);
-  render();
-}
+    function zoomIn() {
+      S.zoom = Math.min(S.zoom * 1.2, 8);
+      render();
+    }
 
-function toggleAngles() {
-  State.showAngles = !State.showAngles;
-  document.getElementById('tool-angles').classList.toggle('active', State.showAngles);
-  render();
-}
+    function zoomOut() {
+      S.zoom = Math.max(S.zoom / 1.2, .2);
+      render();
+    }
 
-function zoomIn() { State.zoom = Math.min(State.zoom*1.2, 8); render(); }
-function zoomOut() { State.zoom = Math.max(State.zoom/1.2, 0.2); render(); }
-function resetView() { State.zoom=1; State.pan={x:0,y:0}; if(State.imageObj) fitImageToCanvas(); render(); }
+    function resetView() {
+      S.zoom = 1;
+      S.pan = {
+        x: 0,
+        y: 0
+      };
+      if (S.imageObj) fitImg();
+      render();
+    }
+    // ─────────────────────────────────────────────
+    //  EXPORT
+    // ─────────────────────────────────────────────
+    function downloadCanvas() {
+      const a = document.createElement('a');
+      a.download = 'geometrico-arquimedes.png';
+      a.href = canvas.toDataURL('image/png');
+      a.click();
+    }
 
-// Scroll to zoom
-canvas.addEventListener('wheel', e => {
-  e.preventDefault();
-  const rect = canvas.getBoundingClientRect();
-  const cx = e.clientX - rect.left;
-  const cy = e.clientY - rect.top;
-  const factor = e.deltaY < 0 ? 1.12 : 1/1.12;
-  State.pan.x = cx - (cx - State.pan.x)*factor;
-  State.pan.y = cy - (cy - State.pan.y)*factor;
-  State.zoom = Math.max(0.2, Math.min(8, State.zoom*factor));
-  render();
-}, {passive:false});
-
-// Pan with right-click drag
-let panStart = null;
-canvas.addEventListener('mousedown', e => {
-  if(e.button===2) { panStart={x:e.clientX-State.pan.x, y:e.clientY-State.pan.y}; }
-});
-canvas.addEventListener('mousemove', e => {
-  if(panStart) { State.pan={x:e.clientX-panStart.x, y:e.clientY-panStart.y}; render(); }
-});
-canvas.addEventListener('mouseup', () => panStart=null);
-canvas.addEventListener('contextmenu', e=>e.preventDefault());
-
-// ═══════════════════════════════════════════════
-//  MODULE: EXPORT
-// ═══════════════════════════════════════════════
-function downloadCanvas() {
-  const link = document.createElement('a');
-  link.download = 'detector-geometrico.png';
-  link.href = canvas.toDataURL('image/png');
-  link.click();
-}
-
-function sendEmail() {
-  const res = State.results;
-  if(!res) { alert('Calcule uma figura primeiro!'); return; }
-  const cls = res.classification;
-  const email = document.getElementById('prof-email').value || 'professor@email.com';
-  const subject = encodeURIComponent(`Resultado Geométrico — ${cls.mainName}`);
-
-  const sidesStr = res.sides.map((s,i)=>{
-    const l1=String.fromCharCode(65+i), l2=String.fromCharCode(65+(i+1)%res.n);
-    return `  Lado ${l1}${l2}: ${s.toFixed(2)} ${State.scaleUnit}`;
-  }).join('\n');
-
-  const anglesStr = res.angles.map((a,i)=>
-    `  Vértice ${String.fromCharCode(65+i)}: ${a.toFixed(2)}°`
-  ).join('\n');
-
-  const tagsStr = cls.tags.map(t=>t.t).join(', ');
-
-  const body = encodeURIComponent(
-`=== DETECTOR GEOMÉTRICO ARQUIMEDES ===
-
-Figura: ${cls.mainName}${cls.subName?' ('+cls.subName+')':''}
-Classificação: ${tagsStr}
-Número de lados: ${res.n}
-
-Perímetro: ${res.perimeter.toFixed(2)} ${State.scaleUnit}
-Área: ${res.area.toFixed(2)} ${State.scaleUnit}²
-Soma dos ângulos: ${res.actualAngleSum.toFixed(1)}° (esperado: ${res.expectedAngleSum}°)
-
---- Lados ---
-${sidesStr}
-
---- Ângulos ---
-${anglesStr}
-
----
-Gerado pelo Detector Geométrico Arquimedes
-Ensino Fundamental II · Fortaleza/CE`
-  );
-
-  window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
-}
-
-// ═══════════════════════════════════════════════
-//  INIT
-// ═══════════════════════════════════════════════
-window.addEventListener('resize', resizeCanvas);
-
-// Initialize tool buttons
-document.getElementById('tool-grid').classList.add('active');
-document.getElementById('tool-labels').classList.add('active');
-document.getElementById('tool-angles').classList.add('active');
-
-// Fix flex display for tab content
-document.getElementById('content-image').style.cssText = 'display:flex;flex-direction:column;gap:16px';
-document.getElementById('content-manual').style.cssText = 'display:none;flex-direction:column;gap:16px';
-
-resizeCanvas();
-render();
-</script>
+    function sendEmail() {
+      if (!S.results) {
+        alert('Calcule uma figura primeiro!');
+        return;
+      }
+      const res = S.results,
+        cls = res.classification;
+      const email = document.getElementById('prof-email').value || 'professor@email.com';
+      const sub = encodeURIComponent(`Resultado Geométrico — ${cls.mainName}`);
+      const sides = res.sides.map((s, i) => `  Lado ${String.fromCharCode(65+i)}${String.fromCharCode(65+(i+1)%res.n)}: ${s.toFixed(2)} ${S.scaleUnit}`).join('\n');
+      const angs = res.angles.map((a, i) => `  Vértice ${String.fromCharCode(65+i)}: ${a.toFixed(2)}°`).join('\n');
+      const body = encodeURIComponent(`=== DETECTOR GEOMÉTRICO ARQUIMEDES ===\nFigura: ${cls.mainName}${cls.subName?' ('+cls.subName+')':''}\nClassificação: ${cls.tags.map(t=>t.t).join(', ')}\nNº de lados: ${res.n}\nPerímetro: ${res.perimeter.toFixed(2)} ${S.scaleUnit}\nÁrea: ${res.area.toFixed(2)} ${S.scaleUnit}²\nSoma ângulos: ${res.actualAngleSum.toFixed(1)}° (esperado: ${res.expectedAngleSum}°)\n\n--- Lados ---\n${sides}\n\n--- Ângulos ---\n${angs}\n\nGerado pelo Detector Geométrico Arquimedes · Fortaleza/CE`);
+      window.location.href = `mailto:${email}?subject=${sub}&body=${body}`;
+    }
+    // ─────────────────────────────────────────────
+    //  INIT
+    // ─────────────────────────────────────────────
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+    render();
+  </script>
 </body>
+
 </html>
