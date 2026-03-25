@@ -2,116 +2,189 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Arquimedes - Análise de Figuras</title>
+<title>Arquimedes PRO Completo</title>
+
+<script async src="https://docs.opencv.org/4.x/opencv.js"></script>
+
 <style>
-  body { font-family: Arial; text-align: center; }
-  canvas { border:1px solid #333; margin-top:10px; }
-  button { margin:5px; padding:8px 12px; cursor:pointer; }
+body { font-family: Arial; text-align: center; }
+canvas { border:1px solid #333; margin-top:10px; }
+button { margin:5px; padding:8px; cursor:pointer; }
+.tabs button { padding:10px; }
+.active { background:#333; color:#fff; }
 </style>
 </head>
+
 <body>
 
-<h2>Arquimedes - Análise de Figuras</h2>
+<h2>Arquimedes PRO</h2>
 
-<input type="file" id="img-upload" accept="image/*">
+<div class="tabs">
+  <button onclick="setTab(1)" class="active">Imagem</button>
+  <button onclick="setTab(2)">Manual</button>
+  <button onclick="setTab(3)">📥 Baixar</button>
+  <button onclick="setTab(4)">📧 Email</button>
+</div>
+
+<!-- ABA 1 -->
+<div id="aba1">
+  <input type="file" id="img-upload"><br>
+  <button onclick="autoDetect()">🤖 Detectar</button>
+  <button onclick="calculate()">Calcular</button>
+</div>
+
+<!-- ABA 2 -->
+<div id="aba2" style="display:none;">
+  <button onclick="enableManual()">Adicionar Pontos</button>
+</div>
+
+<!-- ABA 3 -->
+<div id="aba3" style="display:none;">
+  <button onclick="downloadResult()">Baixar Resultado</button>
+</div>
+
+<!-- ABA 4 -->
+<div id="aba4" style="display:none;">
+  <input type="email" id="email" placeholder="Digite o email"><br>
+  <button onclick="sendEmail()">Enviar Resultado</button>
+</div>
+
 <br>
 <button onclick="clearAll()">Limpar</button>
-<button onclick="autoDetectFigure()">🤖 Detectar Automaticamente</button>
-<button onclick="calculateAndShow()">Calcular</button>
 
-<br>
-<canvas id="canvas" width="600" height="400"></canvas>
+<canvas id="canvas" width="700" height="450"></canvas>
 
 <script>
 
-const canvas = document.getElementById('canvas');
-const ctx = canvas.getContext('2d');
+let currentTab = 1;
+
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
 
 const State = {
-  imageObj: null,
+  img: null,
   points: [],
-  results: null
+  angles: [],
+  manualMode: false
 };
 
-// ================= IMAGE LOAD =================
-document.getElementById('img-upload').addEventListener('change', function(e){
+// ================= ABAS =================
+function setTab(n){
+  currentTab = n;
+  for(let i=1;i<=4;i++){
+    document.getElementById("aba"+i).style.display = "none";
+  }
+  document.getElementById("aba"+n).style.display = "block";
+}
+
+// ================= UPLOAD =================
+document.getElementById("img-upload").addEventListener("change", e=>{
   const file = e.target.files[0];
-  if (!file) return;
+  if(!file) return;
 
   const img = new Image();
-  img.onload = () => {
-    State.imageObj = img;
+  img.onload = ()=>{
+    State.img = img;
     draw();
-  };
+  }
   img.src = URL.createObjectURL(file);
 });
 
-// ================= CLEAR =================
-function clearAll() {
-  State.imageObj = null;
+// ================= LIMPAR =================
+function clearAll(){
+  State.img = null;
   State.points = [];
-  State.results = null;
+  State.angles = [];
+  State.manualMode = false;
 
-  document.getElementById('img-upload').value = '';
+  const input = document.getElementById("img-upload");
+  input.value='';
+  input.type='text';
+  input.type='file';
 
   ctx.clearRect(0,0,canvas.width,canvas.height);
 }
 
-// ================= AUTO DETECT =================
-function autoDetectFigure() {
-  if (!State.imageObj) {
-    alert('Carregue uma imagem primeiro!');
+// ================= MANUAL =================
+function enableManual(){
+  State.manualMode = true;
+}
+
+canvas.addEventListener("click", e=>{
+  if(!State.manualMode) return;
+
+  const rect = canvas.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+
+  State.points.push({x,y});
+  draw();
+});
+
+// ================= OPEN CV DETECÇÃO =================
+function autoDetect(){
+
+  if(!State.img){
+    alert("Carregue uma imagem");
     return;
   }
 
-  const w = canvas.width;
-  const h = canvas.height;
+  let src = cv.imread(canvas);
+  let gray = new cv.Mat();
+  let edges = new cv.Mat();
 
-  State.points = [];
+  cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
+  cv.Canny(gray, edges, 50, 150);
 
-  const ratio = w/h;
+  let contours = new cv.MatVector();
+  let hierarchy = new cv.Mat();
 
-  if (ratio > 1.2) {
-    // retângulo
-    State.points = [
-      {x:50,y:50},
-      {x:w-50,y:50},
-      {x:w-50,y:h-50},
-      {x:50,y:h-50}
-    ];
-  } else if (ratio < 0.8) {
-    // triângulo
-    State.points = [
-      {x:w/2,y:50},
-      {x:w-50,y:h-50},
-      {x:50,y:h-50}
-    ];
-  } else {
-    // quadrado
-    const size = 200;
-    const cx = w/2;
-    const cy = h/2;
+  cv.findContours(edges, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
 
-    State.points = [
-      {x:cx-size/2,y:cy-size/2},
-      {x:cx+size/2,y:cy-size/2},
-      {x:cx+size/2,y:cy+size/2},
-      {x:cx-size/2,y:cy+size/2}
-    ];
+  let maxArea = 0;
+  let bestContour = null;
+
+  for(let i=0;i<contours.size();i++){
+    let cnt = contours.get(i);
+    let area = cv.contourArea(cnt);
+
+    if(area > maxArea){
+      maxArea = area;
+      bestContour = cnt;
+    }
   }
 
-  calculateAndShow();
+  if(bestContour){
+    let approx = new cv.Mat();
+    let peri = cv.arcLength(bestContour,true);
+    cv.approxPolyDP(bestContour, approx, 0.02 * peri, true);
+
+    State.points = [];
+
+    for(let i=0;i<approx.rows;i++){
+      let x = approx.data32S[i*2];
+      let y = approx.data32S[i*2+1];
+      State.points.push({x,y});
+    }
+  }
+
+  calculate();
 }
 
-// ================= CALC ANGLES =================
-function calculateAngles(points){
-  const angles = [];
+// ================= CALCULO =================
+function calculate(){
 
-  for(let i=0;i<points.length;i++){
-    const A = points[(i-1+points.length)%points.length];
-    const B = points[i];
-    const C = points[(i+1)%points.length];
+  if(State.points.length < 3){
+    alert("Figura inválida");
+    return;
+  }
+
+  State.angles = [];
+
+  for(let i=0;i<State.points.length;i++){
+    const A = State.points[(i-1+State.points.length)%State.points.length];
+    const B = State.points[i];
+    const C = State.points[(i+1)%State.points.length];
 
     const AB = {x:A.x-B.x, y:A.y-B.y};
     const CB = {x:C.x-B.x, y:C.y-B.y};
@@ -120,35 +193,61 @@ function calculateAngles(points){
     const mag1 = Math.hypot(AB.x,AB.y);
     const mag2 = Math.hypot(CB.x,CB.y);
 
-    const angle = Math.acos(dot/(mag1*mag2)) * (180/Math.PI);
-    angles.push(angle);
+    const angle = Math.acos(dot/(mag1*mag2))*(180/Math.PI);
+    State.angles.push(angle);
   }
-
-  return angles;
-}
-
-function calculateAndShow(){
-  if(State.points.length < 3){
-    alert('Figura inválida');
-    return;
-  }
-
-  State.results = {
-    angles: calculateAngles(State.points)
-  };
 
   draw();
 }
 
-// ================= DRAW =================
-function draw(){
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-
-  if(State.imageObj){
-    ctx.drawImage(State.imageObj,0,0,canvas.width,canvas.height);
+// ================= DOWNLOAD =================
+function downloadResult(){
+  if(State.angles.length === 0){
+    alert("Nenhum resultado");
+    return;
   }
 
-  if(State.points.length > 0){
+  let text = "Ângulos:\\n";
+  State.angles.forEach((a,i)=>{
+    text += "Vértice "+(i+1)+": "+a.toFixed(2)+"°\\n";
+  });
+
+  const blob = new Blob([text], {type:"text/plain"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "resultado.txt";
+  a.click();
+}
+
+// ================= EMAIL =================
+function sendEmail(){
+  const email = document.getElementById("email").value;
+
+  if(!email){
+    alert("Digite um email");
+    return;
+  }
+
+  let body = "Resultados:%0D%0A";
+
+  State.angles.forEach((a,i)=>{
+    body += "Vértice "+(i+1)+": "+a.toFixed(2)+"°%0D%0A";
+  });
+
+  window.location.href = `mailto:${email}?subject=Resultado Geometria&body=${body}`;
+}
+
+// ================= DRAW =================
+function draw(){
+
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  if(State.img){
+    ctx.drawImage(State.img,0,0,canvas.width,canvas.height);
+  }
+
+  if(State.points.length>0){
+
     ctx.beginPath();
     ctx.moveTo(State.points[0].x, State.points[0].y);
 
@@ -163,24 +262,22 @@ function draw(){
   }
 }
 
-// ================= DRAW ANGLES =================
+// ================= ANGULOS =================
 function drawAngles(){
-  if(!State.results) return;
-
-  const angles = State.results.angles;
 
   for(let i=0;i<State.points.length;i++){
+
     const p = State.points[i];
 
     ctx.beginPath();
     ctx.arc(p.x,p.y,28,0,2*Math.PI);
     ctx.stroke();
 
-    const angleText = angles[i].toFixed(1)+'°';
-
-    ctx.fillStyle = 'yellow';
-    ctx.font = 'bold 14px Arial';
-    ctx.fillText(angleText, p.x+10, p.y-10);
+    if(State.angles[i]){
+      ctx.fillStyle = "yellow";
+      ctx.font = "bold 14px Arial";
+      ctx.fillText(State.angles[i].toFixed(1)+"°", p.x+10, p.y-10);
+    }
   }
 }
 
