@@ -1,287 +1,1646 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Arquimedes PRO Completo</title>
-
-<script async src="https://docs.opencv.org/4.x/opencv.js"></script>
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Detector Geométrico Arquimedes</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-body { font-family: Arial; text-align: center; }
-canvas { border:1px solid #333; margin-top:10px; }
-button { margin:5px; padding:8px; cursor:pointer; }
-.tabs button { padding:10px; }
-.active { background:#333; color:#fff; }
+  :root {
+    --bg: #0a0e1a;
+    --surface: #111827;
+    --surface2: #1a2235;
+    --surface3: #232f45;
+    --border: #2a3a55;
+    --accent: #00d4aa;
+    --accent2: #4f8eff;
+    --accent3: #ff6b6b;
+    --accent4: #ffd166;
+    --text: #e8edf5;
+    --text2: #8a9bb5;
+    --text3: #5a6b80;
+    --grid: rgba(79,142,255,0.06);
+    --grid-strong: rgba(79,142,255,0.12);
+    --success: #22c55e;
+    --warning: #f59e0b;
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Syne', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── BACKGROUND MESH ── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0; z-index: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 10% 10%, rgba(0,212,170,0.07) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 80% at 90% 90%, rgba(79,142,255,0.07) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 50% at 50% 50%, rgba(255,107,107,0.03) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  /* ── HEADER ── */
+  header {
+    position: relative; z-index: 10;
+    display: flex; align-items: center; gap: 16px;
+    padding: 20px 32px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(10,14,26,0.8);
+    backdrop-filter: blur(12px);
+  }
+
+  .logo-icon {
+    width: 44px; height: 44px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+    box-shadow: 0 0 20px rgba(0,212,170,0.3);
+  }
+
+  .logo-text h1 {
+    font-size: 20px; font-weight: 800;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    line-height: 1.1;
+  }
+
+  .logo-text p {
+    font-size: 11px; color: var(--text3);
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.1em; text-transform: uppercase;
+  }
+
+  .header-badge {
+    margin-left: auto;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 11px;
+    color: var(--accent);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* ── MAIN LAYOUT ── */
+  .app {
+    position: relative; z-index: 1;
+    display: grid;
+    grid-template-columns: 340px 1fr;
+    grid-template-rows: auto 1fr;
+    gap: 0;
+    height: calc(100vh - 85px);
+  }
+
+  /* ── TABS ── */
+  .tab-nav {
+    grid-column: 1 / -1;
+    display: flex;
+    gap: 2px;
+    padding: 16px 24px 0;
+    border-bottom: 1px solid var(--border);
+    background: rgba(10,14,26,0.6);
+  }
+
+  .tab-btn {
+    position: relative;
+    padding: 10px 22px;
+    border: none; background: transparent;
+    color: var(--text2);
+    font-family: 'Syne', sans-serif;
+    font-size: 13px; font-weight: 600;
+    cursor: pointer;
+    border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+    transition: all 0.2s;
+    display: flex; align-items: center; gap: 8px;
+  }
+
+  .tab-btn:hover { color: var(--text); background: var(--surface2); }
+
+  .tab-btn.active {
+    color: var(--text);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-bottom: 1px solid var(--surface2);
+    margin-bottom: -1px;
+  }
+
+  .tab-btn.active::after {
+    content: '';
+    position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
+    width: 60%; height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 2px 2px 0 0;
+  }
+
+  .tab-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--text3);
+    transition: background 0.2s;
+  }
+
+  .tab-btn.active .tab-dot { background: var(--accent); box-shadow: 0 0 6px var(--accent); }
+
+  /* ── PANELS ── */
+  .panel-left {
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    padding: 20px;
+    display: flex; flex-direction: column; gap: 16px;
+  }
+
+  .panel-canvas {
+    background: var(--bg);
+    display: flex; flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ── SECTION CARDS ── */
+  .card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .card-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 10px;
+    font-size: 12px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--text2);
+  }
+
+  .card-header-icon {
+    width: 22px; height: 22px;
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px;
+  }
+
+  .card-body { padding: 14px 16px; }
+
+  /* ── BUTTONS ── */
+  .btn {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 10px 16px;
+    border-radius: var(--radius-sm);
+    border: none; cursor: pointer;
+    font-family: 'Syne', sans-serif;
+    font-size: 13px; font-weight: 600;
+    transition: all 0.18s;
+    width: 100%;
+    position: relative; overflow: hidden;
+  }
+
+  .btn::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: rgba(255,255,255,0);
+    transition: background 0.15s;
+  }
+
+  .btn:hover::after { background: rgba(255,255,255,0.07); }
+  .btn:active { transform: scale(0.97); }
+
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: #000;
+    box-shadow: 0 4px 15px rgba(0,212,170,0.25);
+  }
+
+  .btn-secondary {
+    background: var(--surface3);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+
+  .btn-accent2 {
+    background: linear-gradient(135deg, var(--accent2), #7b61ff);
+    color: #fff;
+    box-shadow: 0 4px 15px rgba(79,142,255,0.25);
+  }
+
+  .btn-danger {
+    background: linear-gradient(135deg, var(--accent3), #ff4040);
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(255,107,107,0.25);
+  }
+
+  .btn-warning {
+    background: linear-gradient(135deg, var(--accent4), #f59e0b);
+    color: #000;
+  }
+
+  .btn-success {
+    background: linear-gradient(135deg, var(--success), #16a34a);
+    color: #fff;
+  }
+
+  .btn-sm { padding: 7px 12px; font-size: 12px; }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .btn-row { display: flex; gap: 8px; }
+  .btn-row .btn { flex: 1; }
+
+  /* ── INPUTS ── */
+  .input-group {
+    display: flex; flex-direction: column; gap: 6px;
+  }
+
+  .input-label {
+    font-size: 11px; font-weight: 600;
+    color: var(--text3);
+    text-transform: uppercase; letter-spacing: 0.07em;
+  }
+
+  .input-field {
+    background: var(--surface3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 9px 12px;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    transition: border-color 0.2s;
+    width: 100%;
+  }
+
+  .input-field:focus { outline: none; border-color: var(--accent); }
+
+  .input-row { display: flex; gap: 8px; }
+  .input-row .input-group { flex: 1; }
+
+  /* ── STATUS BAR ── */
+  .status-bar {
+    padding: 8px 16px;
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    display: flex; align-items: center; gap: 8px;
+    transition: all 0.3s;
+  }
+
+  .status-idle { background: var(--surface3); color: var(--text2); border: 1px solid var(--border); }
+  .status-active { background: rgba(0,212,170,0.1); color: var(--accent); border: 1px solid rgba(0,212,170,0.3); }
+  .status-warn { background: rgba(245,158,11,0.1); color: var(--warning); border: 1px solid rgba(245,158,11,0.3); }
+  .status-error { background: rgba(255,107,107,0.1); color: var(--accent3); border: 1px solid rgba(255,107,107,0.3); }
+
+  .status-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+    flex-shrink: 0;
+  }
+
+  .status-dot.pulse {
+    animation: pulse 1.5s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  /* ── RESULTS PANEL ── */
+  .result-item {
+    display: flex; justify-content: space-between; align-items: baseline;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    gap: 12px;
+  }
+
+  .result-item:last-child { border-bottom: none; }
+
+  .result-label {
+    font-size: 12px; color: var(--text2);
+    font-family: 'JetBrains Mono', monospace;
+    flex-shrink: 0;
+  }
+
+  .result-value {
+    font-size: 13px; font-weight: 600;
+    color: var(--text);
+    text-align: right;
+    word-break: break-all;
+  }
+
+  .result-value.highlight {
+    color: var(--accent);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+  }
+
+  .result-value.highlight2 { color: var(--accent2); font-family: 'JetBrains Mono', monospace; }
+  .result-value.highlight3 { color: var(--accent4); font-family: 'JetBrains Mono', monospace; }
+
+  .figure-badge {
+    text-align: center;
+    padding: 14px;
+    background: linear-gradient(135deg, rgba(0,212,170,0.1), rgba(79,142,255,0.1));
+    border: 1px solid rgba(0,212,170,0.25);
+    border-radius: var(--radius);
+    margin-bottom: 12px;
+  }
+
+  .figure-badge .name {
+    font-size: 22px; font-weight: 800;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+
+  .figure-badge .sub {
+    font-size: 12px; color: var(--text2);
+    font-family: 'JetBrains Mono', monospace;
+    margin-top: 4px;
+  }
+
+  .tag-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+
+  .tag {
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px; font-weight: 600;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .tag-green { background: rgba(34,197,94,0.15); color: var(--success); border: 1px solid rgba(34,197,94,0.3); }
+  .tag-blue { background: rgba(79,142,255,0.15); color: var(--accent2); border: 1px solid rgba(79,142,255,0.3); }
+  .tag-yellow { background: rgba(255,209,102,0.15); color: var(--accent4); border: 1px solid rgba(255,209,102,0.3); }
+  .tag-red { background: rgba(255,107,107,0.15); color: var(--accent3); border: 1px solid rgba(255,107,107,0.3); }
+  .tag-cyan { background: rgba(0,212,170,0.15); color: var(--accent); border: 1px solid rgba(0,212,170,0.3); }
+
+  /* ── CANVAS AREA ── */
+  .canvas-toolbar {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    flex-wrap: wrap;
+  }
+
+  .canvas-toolbar .tool-group {
+    display: flex; gap: 4px;
+    padding: 4px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+  }
+
+  .tool-btn {
+    padding: 6px 12px;
+    border: none; background: transparent;
+    color: var(--text2);
+    font-size: 12px; font-weight: 600;
+    font-family: 'Syne', sans-serif;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex; align-items: center; gap: 6px;
+    white-space: nowrap;
+  }
+
+  .tool-btn:hover { background: var(--surface3); color: var(--text); }
+
+  .tool-btn.active {
+    background: linear-gradient(135deg, rgba(0,212,170,0.2), rgba(79,142,255,0.2));
+    color: var(--accent);
+    border: 1px solid rgba(0,212,170,0.3);
+  }
+
+  .canvas-wrap {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--bg);
+  }
+
+  #main-canvas {
+    display: block;
+    cursor: crosshair;
+    touch-action: none;
+  }
+
+  /* ── MODE STATUS ── */
+  .mode-indicator {
+    position: absolute; top: 12px; left: 12px;
+    background: rgba(10,14,26,0.85);
+    backdrop-filter: blur(8px);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 11px;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text2);
+    display: flex; align-items: center; gap: 6px;
+    pointer-events: none;
+  }
+
+  /* ── IMAGE UPLOAD ZONE ── */
+  .upload-zone {
+    border: 2px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 24px 16px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: var(--surface3);
+    position: relative;
+  }
+
+  .upload-zone:hover {
+    border-color: var(--accent);
+    background: rgba(0,212,170,0.05);
+  }
+
+  .upload-zone input {
+    position: absolute; inset: 0;
+    opacity: 0; cursor: pointer; width: 100%;
+  }
+
+  .upload-zone .icon { font-size: 28px; margin-bottom: 8px; }
+  .upload-zone .hint { font-size: 12px; color: var(--text3); margin-top: 4px; }
+
+  /* ── COORD DISPLAY ── */
+  .coord-display {
+    position: absolute; bottom: 12px; right: 12px;
+    background: rgba(10,14,26,0.85);
+    backdrop-filter: blur(8px);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 5px 10px;
+    font-size: 11px;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text3);
+    pointer-events: none;
+  }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 900px) {
+    .app {
+      grid-template-columns: 1fr;
+      grid-template-rows: auto auto 1fr;
+      height: auto;
+    }
+    .panel-left { max-height: 400px; }
+    .panel-canvas { height: 60vw; min-height: 300px; }
+  }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .fadeIn { animation: fadeIn 0.3s ease forwards; }
+
+  /* ── TOOLTIP ── */
+  .tooltip-text {
+    font-size: 11px; color: var(--text2); line-height: 1.5;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .divider {
+    height: 1px; background: var(--border); margin: 4px 0;
+  }
+
+  .step-num {
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: var(--surface3);
+    border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 700;
+    color: var(--text2);
+    flex-shrink: 0;
+  }
+
+  .step-num.done {
+    background: rgba(0,212,170,0.15);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .step-row {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 12px; color: var(--text2);
+    padding: 4px 0;
+  }
+
+  /* ── MANUAL INPUT TABLE ── */
+  .side-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .side-table th {
+    padding: 6px 8px;
+    text-align: left;
+    color: var(--text3);
+    border-bottom: 1px solid var(--border);
+    font-weight: 600; font-size: 11px;
+  }
+
+  .side-table td { padding: 5px 8px; border-bottom: 1px solid rgba(42,58,85,0.5); }
+  .side-table input {
+    background: var(--surface3);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 4px 8px;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    width: 70px;
+  }
+
+  .side-table input:focus { outline: none; border-color: var(--accent); }
+
+  .no-results {
+    text-align: center;
+    padding: 24px;
+    color: var(--text3);
+    font-size: 13px;
+  }
+
+  .no-results .big { font-size: 32px; margin-bottom: 8px; }
 </style>
 </head>
-
 <body>
 
-<h2>Arquimedes PRO</h2>
+<header>
+  <div class="logo-icon">📐</div>
+  <div class="logo-text">
+    <h1>Detector Geométrico Arquimedes</h1>
+    <p>Educação Matemática · Ensino Fundamental II</p>
+  </div>
+  <div class="header-badge">v3.0 · Fortaleza/CE</div>
+</header>
 
-<div class="tabs">
-  <button onclick="setTab(1)" class="active">Imagem</button>
-  <button onclick="setTab(2)">Manual</button>
-  <button onclick="setTab(3)">📥 Baixar</button>
-  <button onclick="setTab(4)">📧 Email</button>
-</div>
+<div class="app">
 
-<!-- ABA 1 -->
-<div id="aba1">
-  <input type="file" id="img-upload"><br>
-  <button onclick="autoDetect()">🤖 Detectar</button>
-  <button onclick="calculate()">Calcular</button>
-</div>
+  <!-- TABS -->
+  <div class="tab-nav">
+    <button class="tab-btn active" onclick="switchTab('image')" id="tab-image">
+      <span class="tab-dot"></span> Análise por Imagem
+    </button>
+    <button class="tab-btn" onclick="switchTab('manual')" id="tab-manual">
+      <span class="tab-dot"></span> Construção Manual
+    </button>
+  </div>
 
-<!-- ABA 2 -->
-<div id="aba2" style="display:none;">
-  <button onclick="enableManual()">Adicionar Pontos</button>
-</div>
+  <!-- ═══ PANEL LEFT ═══ -->
+  <div class="panel-left" id="left-panel">
 
-<!-- ABA 3 -->
-<div id="aba3" style="display:none;">
-  <button onclick="downloadResult()">Baixar Resultado</button>
-</div>
+    <!-- IMAGE TAB CONTENT -->
+    <div id="content-image">
 
-<!-- ABA 4 -->
-<div id="aba4" style="display:none;">
-  <input type="email" id="email" placeholder="Digite o email"><br>
-  <button onclick="sendEmail()">Enviar Resultado</button>
-</div>
+      <!-- Step 1: Upload -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-header-icon" style="background:rgba(0,212,170,0.15)">📁</div>
+          <span>1. Carregar Imagem</span>
+        </div>
+        <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
+          <div class="upload-zone" id="upload-zone">
+            <input type="file" id="img-upload" accept="image/*" onchange="loadImage(event)">
+            <div class="icon">🖼️</div>
+            <div style="font-size:13px;font-weight:600">Clique ou arraste a imagem</div>
+            <div class="hint">JPG, PNG — qualquer tamanho</div>
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="clearAll()">🗑 Limpar tudo</button>
+        </div>
+      </div>
 
-<br>
-<button onclick="clearAll()">Limpar</button>
+      <!-- Step 2: Scale -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-header-icon" style="background:rgba(79,142,255,0.15)">📏</div>
+          <span>2. Definir Escala</span>
+        </div>
+        <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
+          <div id="scale-steps">
+            <div class="step-row"><span class="step-num" id="sn1">1</span> Clique em dois pontos de referência na imagem</div>
+            <div class="step-row"><span class="step-num" id="sn2">2</span> Informe a distância real</div>
+          </div>
+          <div class="input-row">
+            <div class="input-group">
+              <label class="input-label">Valor real</label>
+              <input class="input-field" id="scale-value" type="number" min="0.01" step="0.01" value="10" placeholder="Ex: 10">
+            </div>
+            <div class="input-group">
+              <label class="input-label">Unidade</label>
+              <select class="input-field" id="scale-unit">
+                <option>cm</option><option>m</option><option>mm</option><option>km</option><option>px</option>
+              </select>
+            </div>
+          </div>
+          <button class="btn btn-accent2 btn-sm" onclick="startScaleMode()" id="btn-scale">
+            🎯 Marcar Escala
+          </button>
+          <div class="status-bar status-idle" id="scale-status">
+            <div class="status-dot"></div>
+            <span>Aguardando imagem...</span>
+          </div>
+        </div>
+      </div>
 
-<canvas id="canvas" width="700" height="450"></canvas>
+      <!-- Step 3: Mark Points -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-header-icon" style="background:rgba(255,107,107,0.15)">📍</div>
+          <span>3. Marcar Vértices</span>
+        </div>
+        <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
+          <p class="tooltip-text">Ative o modo de marcação, clique sobre a figura na imagem para adicionar cada vértice e depois clique em <strong style="color:var(--accent)">Calcular Figura</strong>.</p>
+          <button class="btn btn-danger btn-sm" onclick="startMarkMode()" id="btn-mark">
+            ✏️ Marcar Pontos
+          </button>
+          <button class="btn btn-secondary btn-sm" onclick="undoPoint()">↩ Desfazer último</button>
+          <div class="status-bar status-idle" id="mark-status">
+            <div class="status-dot"></div>
+            <span>0 vértices marcados</span>
+          </div>
+          <button class="btn btn-primary" onclick="calculateAndShow()" id="btn-calc" style="margin-top:4px">
+            ⚡ Calcular Figura
+          </button>
+        </div>
+      </div>
+
+    </div><!-- end content-image -->
+
+    <!-- MANUAL TAB CONTENT -->
+    <div id="content-manual" style="display:none">
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-header-icon" style="background:rgba(255,209,102,0.15)">🖊️</div>
+          <span>Modo Construção Manual</span>
+        </div>
+        <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
+          <p class="tooltip-text">Clique no canvas para adicionar vértices. Mínimo 3 para calcular.</p>
+          <button class="btn btn-warning btn-sm" onclick="startManualMode()" id="btn-manual-draw">
+            ✏️ Ativar Desenho
+          </button>
+          <button class="btn btn-secondary btn-sm" onclick="undoPoint()">↩ Desfazer último</button>
+          <div class="status-bar status-idle" id="manual-status">
+            <div class="status-dot"></div>
+            <span>0 vértices</span>
+          </div>
+          <button class="btn btn-primary" onclick="calculateAndShow()" id="btn-calc-manual">
+            ⚡ Calcular Figura
+          </button>
+        </div>
+      </div>
+
+      <!-- Manual measurements override -->
+      <div class="card" id="manual-override-card" style="display:none">
+        <div class="card-header">
+          <div class="card-header-icon" style="background:rgba(34,197,94,0.15)">📝</div>
+          <span>Ajuste Manual de Medidas</span>
+        </div>
+        <div class="card-body">
+          <p class="tooltip-text" style="margin-bottom:10px">Edite os comprimentos dos lados (deixe vazio para usar o valor calculado):</p>
+          <div id="manual-sides-table"></div>
+        </div>
+      </div>
+
+    </div><!-- end content-manual -->
+
+    <!-- ═══ RESULTS (shared) ═══ -->
+    <div id="results-section" style="display:none" class="fadeIn">
+
+      <div id="figure-badge-wrap"></div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-header-icon" style="background:rgba(0,212,170,0.15)">📊</div>
+          <span>Medidas</span>
+        </div>
+        <div class="card-body" id="results-measures"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-header-icon" style="background:rgba(79,142,255,0.15)">🔍</div>
+          <span>Classificação</span>
+        </div>
+        <div class="card-body" id="results-classification"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-header-icon" style="background:rgba(255,209,102,0.15)">📋</div>
+          <span>Ângulos e Lados</span>
+        </div>
+        <div class="card-body" id="results-details"></div>
+      </div>
+
+      <!-- Export / Email -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-header-icon" style="background:rgba(255,107,107,0.15)">📤</div>
+          <span>Exportar</span>
+        </div>
+        <div class="card-body" style="display:flex;flex-direction:column;gap:8px">
+          <button class="btn btn-secondary btn-sm" onclick="downloadCanvas()">💾 Baixar Imagem</button>
+          <div class="input-row">
+            <div class="input-group">
+              <label class="input-label">Email do professor</label>
+              <input class="input-field" id="prof-email" type="email" value="professor@email.com" placeholder="professor@email.com">
+            </div>
+          </div>
+          <button class="btn btn-success btn-sm" onclick="sendEmail()">📧 Enviar Resultado</button>
+        </div>
+      </div>
+
+    </div><!-- end results -->
+
+  </div><!-- end panel-left -->
+
+  <!-- ═══ PANEL CANVAS ═══ -->
+  <div class="panel-canvas">
+
+    <div class="canvas-toolbar">
+      <div class="tool-group">
+        <button class="tool-btn" id="tool-grid" onclick="toggleGrid()" title="Malha">⊞ Grid</button>
+        <button class="tool-btn" id="tool-labels" onclick="toggleLabels()" title="Rótulos">🏷 Rótulos</button>
+        <button class="tool-btn" id="tool-angles" onclick="toggleAngles()" title="Ângulos">∠ Ângulos</button>
+      </div>
+      <div class="tool-group">
+        <button class="tool-btn" onclick="zoomIn()">+ Zoom</button>
+        <button class="tool-btn" onclick="zoomOut()">− Zoom</button>
+        <button class="tool-btn" onclick="resetView()">⟳ Reset</button>
+      </div>
+      <div style="margin-left:auto;font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace" id="canvas-info">
+        Nenhuma figura
+      </div>
+    </div>
+
+    <div class="canvas-wrap" id="canvas-wrap">
+      <canvas id="main-canvas"></canvas>
+      <div class="mode-indicator" id="mode-indicator">
+        <div class="status-dot"></div>
+        <span id="mode-text">Aguardando...</span>
+      </div>
+      <div class="coord-display" id="coord-display">x: — y: —</div>
+    </div>
+
+  </div><!-- end panel-canvas -->
+
+</div><!-- end app -->
 
 <script>
-
-let currentTab = 1;
-
-const canvas = document.getElementById("canvas");
-const ctx = canvas.getContext("2d");
-
+// ═══════════════════════════════════════════════
+//  MODULE: STATE
+// ═══════════════════════════════════════════════
 const State = {
-  img: null,
-  points: [],
-  angles: [],
-  manualMode: false
+  tab: 'image',
+  mode: 'idle',        // idle | scale1 | scale2 | mark | manual
+  image: null,
+  imageObj: null,
+  points: [],          // {x, y} canvas coords
+  scalePoints: [],     // two points for scale
+  scalePx: null,       // pixels between scale points
+  scaleReal: 10,
+  scaleUnit: 'cm',
+  results: null,
+  zoom: 1,
+  pan: {x:0, y:0},
+  showGrid: true,
+  showLabels: true,
+  showAngles: true,
+  canvasW: 0,
+  canvasH: 0,
+  imgOffX: 0, imgOffY: 0, imgScale: 1,
 };
 
-// ================= ABAS =================
-function setTab(n){
-  currentTab = n;
-  for(let i=1;i<=4;i++){
-    document.getElementById("aba"+i).style.display = "none";
-  }
-  document.getElementById("aba"+n).style.display = "block";
+// ═══════════════════════════════════════════════
+//  MODULE: CANVAS / RENDER
+// ═══════════════════════════════════════════════
+const canvas = document.getElementById('main-canvas');
+const ctx = canvas.getContext('2d');
+
+function resizeCanvas() {
+  const wrap = document.getElementById('canvas-wrap');
+  canvas.width = wrap.clientWidth || 800;
+  canvas.height = wrap.clientHeight || 500;
+  State.canvasW = canvas.width;
+  State.canvasH = canvas.height;
+  render();
 }
 
-// ================= UPLOAD =================
-document.getElementById("img-upload").addEventListener("change", e=>{
-  const file = e.target.files[0];
-  if(!file) return;
+function render() {
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
 
-  const img = new Image();
-  img.onload = ()=>{
-    State.img = img;
-    draw();
-  }
-  img.src = URL.createObjectURL(file);
-});
+  ctx.save();
+  ctx.translate(State.pan.x, State.pan.y);
+  ctx.scale(State.zoom, State.zoom);
 
-// ================= LIMPAR =================
-function clearAll(){
-  State.img = null;
-  State.points = [];
-  State.angles = [];
-  State.manualMode = false;
+  if (State.showGrid) drawGrid(W, H);
+  if (State.imageObj) drawImage();
+  if (State.scalePoints.length === 2) drawScaleLine();
+  if (State.points.length > 0) drawPolygon();
+  if (State.results && State.showAngles) drawAngles();
+  if (State.results && State.showLabels) drawLabels();
+  drawScalePoint();
 
-  const input = document.getElementById("img-upload");
-  input.value='';
-  input.type='text';
-  input.type='file';
-
-  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.restore();
 }
 
-// ================= MANUAL =================
-function enableManual(){
-  State.manualMode = true;
+function drawGrid(W, H) {
+  const size = 30;
+  ctx.strokeStyle = 'rgba(79,142,255,0.07)';
+  ctx.lineWidth = 0.5;
+  const invZ = 1/State.zoom;
+  const ox = -State.pan.x * invZ;
+  const oy = -State.pan.y * invZ;
+  const cols = Math.ceil(W * invZ / size) + 2;
+  const rows = Math.ceil(H * invZ / size) + 2;
+  const sx = Math.floor(ox/size)*size;
+  const sy = Math.floor(oy/size)*size;
+  for(let i=0;i<cols;i++){
+    const x = sx + i*size;
+    ctx.beginPath(); ctx.moveTo(x,sy); ctx.lineTo(x, sy+rows*size);
+    ctx.stroke();
+  }
+  for(let j=0;j<rows;j++){
+    const y = sy + j*size;
+    ctx.beginPath(); ctx.moveTo(sx,y); ctx.lineTo(sx+cols*size, y);
+    ctx.stroke();
+  }
+  // Major gridlines
+  ctx.strokeStyle = 'rgba(79,142,255,0.14)';
+  ctx.lineWidth = 0.8;
+  const bigSize = size*5;
+  const bsx = Math.floor(ox/bigSize)*bigSize;
+  const bsy = Math.floor(oy/bigSize)*bigSize;
+  const bcols = Math.ceil(W*invZ/bigSize)+2;
+  const brows = Math.ceil(H*invZ/bigSize)+2;
+  for(let i=0;i<bcols;i++){
+    const x = bsx+i*bigSize;
+    ctx.beginPath(); ctx.moveTo(x,bsy); ctx.lineTo(x,bsy+brows*bigSize); ctx.stroke();
+  }
+  for(let j=0;j<brows;j++){
+    const y = bsy+j*bigSize;
+    ctx.beginPath(); ctx.moveTo(bsx,y); ctx.lineTo(bsx+bcols*bigSize,y); ctx.stroke();
+  }
 }
 
-canvas.addEventListener("click", e=>{
-  if(!State.manualMode) return;
-
-  const rect = canvas.getBoundingClientRect();
-  const x = e.clientX - rect.left;
-  const y = e.clientY - rect.top;
-
-  State.points.push({x,y});
-  draw();
-});
-
-// ================= OPEN CV DETECÇÃO =================
-function autoDetect(){
-
-  if(!State.img){
-    alert("Carregue uma imagem");
-    return;
-  }
-
-  let src = cv.imread(canvas);
-  let gray = new cv.Mat();
-  let edges = new cv.Mat();
-
-  cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
-  cv.Canny(gray, edges, 50, 150);
-
-  let contours = new cv.MatVector();
-  let hierarchy = new cv.Mat();
-
-  cv.findContours(edges, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
-
-  let maxArea = 0;
-  let bestContour = null;
-
-  for(let i=0;i<contours.size();i++){
-    let cnt = contours.get(i);
-    let area = cv.contourArea(cnt);
-
-    if(area > maxArea){
-      maxArea = area;
-      bestContour = cnt;
-    }
-  }
-
-  if(bestContour){
-    let approx = new cv.Mat();
-    let peri = cv.arcLength(bestContour,true);
-    cv.approxPolyDP(bestContour, approx, 0.02 * peri, true);
-
-    State.points = [];
-
-    for(let i=0;i<approx.rows;i++){
-      let x = approx.data32S[i*2];
-      let y = approx.data32S[i*2+1];
-      State.points.push({x,y});
-    }
-  }
-
-  calculate();
+function drawImage() {
+  const img = State.imageObj;
+  const {imgOffX:ox, imgOffY:oy, imgScale:s} = State;
+  ctx.globalAlpha = 0.92;
+  ctx.drawImage(img, ox, oy, img.width*s, img.height*s);
+  ctx.globalAlpha = 1;
 }
 
-// ================= CALCULO =================
-function calculate(){
-
-  if(State.points.length < 3){
-    alert("Figura inválida");
-    return;
-  }
-
-  State.angles = [];
-
-  for(let i=0;i<State.points.length;i++){
-    const A = State.points[(i-1+State.points.length)%State.points.length];
-    const B = State.points[i];
-    const C = State.points[(i+1)%State.points.length];
-
-    const AB = {x:A.x-B.x, y:A.y-B.y};
-    const CB = {x:C.x-B.x, y:C.y-B.y};
-
-    const dot = AB.x*CB.x + AB.y*CB.y;
-    const mag1 = Math.hypot(AB.x,AB.y);
-    const mag2 = Math.hypot(CB.x,CB.y);
-
-    const angle = Math.acos(dot/(mag1*mag2))*(180/Math.PI);
-    State.angles.push(angle);
-  }
-
-  draw();
-}
-
-// ================= DOWNLOAD =================
-function downloadResult(){
-  if(State.angles.length === 0){
-    alert("Nenhum resultado");
-    return;
-  }
-
-  let text = "Ângulos:\\n";
-  State.angles.forEach((a,i)=>{
-    text += "Vértice "+(i+1)+": "+a.toFixed(2)+"°\\n";
+function drawScaleLine() {
+  const [p1,p2] = State.scalePoints;
+  ctx.strokeStyle = '#ffd166';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([6,4]);
+  ctx.beginPath(); ctx.moveTo(p1.x,p1.y); ctx.lineTo(p2.x,p2.y); ctx.stroke();
+  ctx.setLineDash([]);
+  [p1,p2].forEach(p=>{
+    ctx.fillStyle = '#ffd166';
+    ctx.beginPath(); ctx.arc(p.x,p.y,5,0,Math.PI*2); ctx.fill();
   });
-
-  const blob = new Blob([text], {type:"text/plain"});
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = "resultado.txt";
-  a.click();
+  // midpoint label
+  const mx=(p1.x+p2.x)/2, my=(p1.y+p2.y)/2;
+  const dist = Math.hypot(p2.x-p1.x, p2.y-p1.y).toFixed(1);
+  drawLabel(mx, my-14, `${State.scaleReal}${State.scaleUnit} (${dist}px)`, '#ffd166');
 }
 
-// ================= EMAIL =================
-function sendEmail(){
-  const email = document.getElementById("email").value;
-
-  if(!email){
-    alert("Digite um email");
-    return;
+function drawScalePoint() {
+  if(State.scalePoints.length === 1) {
+    const p = State.scalePoints[0];
+    ctx.fillStyle='#ffd166';
+    ctx.beginPath(); ctx.arc(p.x,p.y,5,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle='rgba(255,209,102,0.5)';
+    ctx.lineWidth=1; ctx.setLineDash([4,4]);
+    ctx.beginPath(); ctx.arc(p.x,p.y,12,0,Math.PI*2); ctx.stroke();
+    ctx.setLineDash([]);
   }
-
-  let body = "Resultados:%0D%0A";
-
-  State.angles.forEach((a,i)=>{
-    body += "Vértice "+(i+1)+": "+a.toFixed(2)+"°%0D%0A";
-  });
-
-  window.location.href = `mailto:${email}?subject=Resultado Geometria&body=${body}`;
 }
 
-// ================= DRAW =================
-function draw(){
+function drawPolygon() {
+  const pts = State.points;
+  if(pts.length === 0) return;
 
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-
-  if(State.img){
-    ctx.drawImage(State.img,0,0,canvas.width,canvas.height);
-  }
-
-  if(State.points.length>0){
-
+  // Fill
+  if(pts.length >= 3) {
     ctx.beginPath();
-    ctx.moveTo(State.points[0].x, State.points[0].y);
-
-    for(let p of State.points){
-      ctx.lineTo(p.x,p.y);
-    }
-
+    ctx.moveTo(pts[0].x, pts[0].y);
+    pts.slice(1).forEach(p=>ctx.lineTo(p.x,p.y));
     ctx.closePath();
-    ctx.stroke();
-
-    drawAngles();
+    ctx.fillStyle = 'rgba(0,212,170,0.08)';
+    ctx.fill();
   }
+
+  // Sides
+  ctx.strokeStyle = '#00d4aa';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x, pts[0].y);
+  pts.forEach((p,i)=>{
+    if(i>0) ctx.lineTo(p.x,p.y);
+  });
+  if(pts.length >= 3) ctx.closePath();
+  ctx.stroke();
+
+  // Vertices
+  pts.forEach((p,i)=>{
+    ctx.fillStyle = '#fff';
+    ctx.strokeStyle = '#00d4aa';
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(p.x,p.y,6,0,Math.PI*2); ctx.fill(); ctx.stroke();
+    // label
+    if(State.showLabels) {
+      const letter = String.fromCharCode(65+i);
+      drawLabel(p.x+10, p.y-10, letter, '#00d4aa', true);
+    }
+  });
 }
 
-// ================= ANGULOS =================
-function drawAngles(){
+function drawAngles() {
+  const pts = State.points;
+  if(!State.results || pts.length < 3) return;
+  const angles = State.results.angles;
+  const n = pts.length;
 
-  for(let i=0;i<State.points.length;i++){
+  pts.forEach((p, i) => {
+    const prev = pts[(i - 1 + n) % n];
+    const next = pts[(i + 1) % n];
 
-    const p = State.points[i];
+    // Vectors from current vertex toward neighbours
+    const v1 = { x: prev.x - p.x, y: prev.y - p.y };
+    const v2 = { x: next.x - p.x, y: next.y - p.y };
 
+    const a1 = Math.atan2(v1.y, v1.x);
+    const a2 = Math.atan2(v2.y, v2.x);
+
+    // ── Arc ──
+    // We want the INTERIOR arc (the smaller one for convex vertices)
+    const arcR = 16;
+    ctx.strokeStyle = 'rgba(255,209,102,0.7)';
+    ctx.lineWidth = 1.5;
     ctx.beginPath();
-    ctx.arc(p.x,p.y,28,0,2*Math.PI);
+
+    // Normalize angles so we always draw the interior sweep
+    let start = a1, end = a2;
+    // Ensure [0, 2π) range
+    while(end < start) end += Math.PI * 2;
+    let sweep = end - start;
+    // If sweep > π we're drawing the exterior; flip
+    if(sweep > Math.PI) { const tmp = start; start = end - Math.PI * 2; end = tmp; sweep = Math.PI * 2 - sweep; }
+
+    ctx.arc(p.x, p.y, arcR, start, end);
     ctx.stroke();
 
-    if(State.angles[i]){
-      ctx.fillStyle = "yellow";
-      ctx.font = "bold 14px Arial";
-      ctx.fillText(State.angles[i].toFixed(1)+"°", p.x+10, p.y-10);
+    // ── Angle value label ──
+    // Place it along the bisector of the interior arc, a bit further out
+    const bisector = start + (end - start) / 2;
+    const labelR = arcR + 18;
+    const lx = p.x + Math.cos(bisector) * labelR;
+    const ly = p.y + Math.sin(bisector) * labelR;
+
+    if(angles && angles[i] !== undefined) {
+      // Draw a small circle background for clarity
+      const text = `${angles[i].toFixed(1)}°`;
+      ctx.font = 'bold 11px JetBrains Mono, monospace';
+      const tw = ctx.measureText(text).width;
+      const pad = 4;
+      // Background pill
+      ctx.fillStyle = 'rgba(10,14,26,0.82)';
+      ctx.beginPath();
+      ctx.roundRect
+        ? ctx.roundRect(lx - tw/2 - pad, ly - 9, tw + pad*2, 14, 4)
+        : ctx.rect(lx - tw/2 - pad, ly - 9, tw + pad*2, 14);
+      ctx.fill();
+      // Border
+      ctx.strokeStyle = 'rgba(255,209,102,0.45)';
+      ctx.lineWidth = 0.8;
+      ctx.stroke();
+      // Text
+      ctx.fillStyle = '#ffd166';
+      ctx.textAlign = 'center';
+      ctx.fillText(text, lx, ly + 2);
+      ctx.textAlign = 'left'; // restore default
+    }
+  });
+}
+
+function drawLabels() {
+  const pts = State.points;
+  const res = State.results;
+  if(!res || pts.length < 2) return;
+  // side length labels on each edge midpoint
+  const n = pts.length;
+  for(let i=0;i<n;i++){
+    const p1 = pts[i];
+    const p2 = pts[(i+1)%n];
+    const mx=(p1.x+p2.x)/2, my=(p1.y+p2.y)/2;
+    const len = res.sides[i];
+    if(len !== undefined) {
+      const dx=p2.x-p1.x, dy=p2.y-p1.y;
+      const norm = Math.hypot(dx,dy)||1;
+      const nx=-dy/norm*16, ny=dx/norm*16;
+      drawLabel(mx+nx, my+ny, `${len.toFixed(2)} ${State.scaleUnit}`, '#4f8eff');
     }
   }
 }
 
-</script>
+function drawLabel(x, y, text, color='#fff', bold=false) {
+  ctx.font = `${bold?'bold ':''} 11px JetBrains Mono, monospace`;
+  const metrics = ctx.measureText(text);
+  const pw=4, ph=3;
+  ctx.fillStyle='rgba(10,14,26,0.75)';
+  ctx.fillRect(x-pw, y-12, metrics.width+pw*2, 16+ph);
+  ctx.fillStyle=color;
+  ctx.fillText(text, x, y);
+}
 
+// ═══════════════════════════════════════════════
+//  MODULE: GEOMETRY
+// ═══════════════════════════════════════════════
+const Geo = {
+  // Convert canvas px to real units
+  toReal(px) {
+    if(!State.scalePx || State.scalePx === 0) return px;
+    return (px / State.scalePx) * State.scaleReal;
+  },
+
+  // Shoelace formula (area in px²)
+  shoelace(pts) {
+    let area = 0;
+    const n = pts.length;
+    for(let i=0;i<n;i++) {
+      const j=(i+1)%n;
+      area += pts[i].x * pts[j].y;
+      area -= pts[j].x * pts[i].y;
+    }
+    return Math.abs(area)/2;
+  },
+
+  // Angle at vertex i (degrees)
+  interiorAngle(pts, i) {
+    const n = pts.length;
+    const prev = pts[(i-1+n)%n];
+    const curr = pts[i];
+    const next = pts[(i+1)%n];
+    const v1 = {x:prev.x-curr.x, y:prev.y-curr.y};
+    const v2 = {x:next.x-curr.x, y:next.y-curr.y};
+    const dot = v1.x*v2.x + v1.y*v2.y;
+    const mag1 = Math.hypot(v1.x,v1.y);
+    const mag2 = Math.hypot(v2.x,v2.y);
+    if(mag1===0||mag2===0) return 0;
+    let cos = dot/(mag1*mag2);
+    cos = Math.max(-1, Math.min(1, cos));
+    return Math.acos(cos) * 180/Math.PI;
+  },
+
+  analyze(pts) {
+    const n = pts.length;
+    if(n < 2) return null;
+
+    // Side lengths in px
+    const sidesPx = [];
+    for(let i=0;i<n;i++) {
+      const p1=pts[i], p2=pts[(i+1)%n];
+      sidesPx.push(Math.hypot(p2.x-p1.x, p2.y-p1.y));
+    }
+
+    // Convert to real
+    const sides = sidesPx.map(s => this.toReal(s));
+
+    // Angles
+    const angles = n >= 3 ? pts.map((_,i) => this.interiorAngle(pts,i)) : [];
+
+    // Perimeter
+    const perimeter = sides.reduce((a,b)=>a+b, 0);
+
+    // Area in px² → real²
+    const areaPx = n >= 3 ? this.shoelace(pts) : 0;
+    const area = State.scalePx ? areaPx * Math.pow(State.scaleReal/State.scalePx, 2) : areaPx;
+
+    // Angle sum expected
+    const expectedAngleSum = (n-2)*180;
+    const actualAngleSum = angles.reduce((a,b)=>a+b,0);
+
+    return { n, sides, sidesPx, angles, perimeter, area, expectedAngleSum, actualAngleSum };
+  },
+
+  classify(res) {
+    const { n, sides, angles } = res;
+    const tags = [];
+    let mainName = '';
+    let subName = '';
+
+    // Polygon name
+    const names = ['','','','Triângulo','Quadrilátero','Pentágono','Hexágono','Heptágono','Octógono','Eneágono','Decágono'];
+    mainName = names[n] || `Polígono de ${n} lados`;
+
+    // Regular?
+    const maxS = Math.max(...sides), minS = Math.min(...sides);
+    const isEquilateral = (maxS-minS)/maxS < 0.03;
+    const maxA = angles.length ? Math.max(...angles) : 0;
+    const minA = angles.length ? Math.min(...angles) : 0;
+    const isEquiangular = angles.length > 0 && (maxA-minA) < 2;
+
+    if(isEquilateral && isEquiangular) tags.push({t:'Regular',c:'tag-cyan'});
+
+    // Triangle classification
+    if(n===3) {
+      const eps = sides.reduce((a,b)=>a+b,0)*0.03;
+      const [a,b,c] = [...sides].sort((x,y)=>x-y);
+      if(maxS-minS < eps) { subName='Equilátero'; tags.push({t:'Equilátero',c:'tag-green'}); }
+      else {
+        const pairs = [[sides[0],sides[1]],[sides[1],sides[2]],[sides[0],sides[2]]];
+        const iso = pairs.filter(([x,y])=>Math.abs(x-y)<eps).length > 0;
+        if(iso) { subName='Isósceles'; tags.push({t:'Isósceles',c:'tag-blue'}); }
+        else { subName='Escaleno'; tags.push({t:'Escaleno',c:'tag-yellow'}); }
+      }
+      // Right angle?
+      const isRight = Math.abs(a*a+b*b - c*c) / (c*c) < 0.06;
+      if(isRight) { tags.push({t:'Retângulo',c:'tag-red'}); }
+      // Obtuse?
+      if(angles.length && Math.max(...angles) > 91) tags.push({t:'Obtusângulo',c:'tag-yellow'});
+      else if(angles.length && Math.max(...angles) < 89) tags.push({t:'Acutângulo',c:'tag-cyan'});
+    }
+
+    if(n===4) {
+      const [a,b,c,d] = sides;
+      const eps = (a+b+c+d)*0.03;
+      if(isEquilateral) { tags.push({t:'Losango/Quadrado',c:'tag-cyan'}); }
+      if(Math.abs(a-c)<eps && Math.abs(b-d)<eps) tags.push({t:'Paralelogramo',c:'tag-blue'});
+      if(angles.length && angles.every(ang=>Math.abs(ang-90)<4)) tags.push({t:'Retângulo',c:'tag-green'});
+    }
+
+    // Consistency checks
+    const consistent = [];
+    if(angles.length > 0) {
+      const angleErr = Math.abs(res.actualAngleSum - res.expectedAngleSum);
+      if(angleErr < 3) consistent.push({t:'✓ Soma ângulos OK',c:'tag-green'});
+      else consistent.push({t:`⚠ Soma ângulos ${res.actualAngleSum.toFixed(1)}° (esperado ${res.expectedAngleSum}°)`,c:'tag-red'});
+    }
+
+    // Largest side ↔ largest angle
+    if(angles.length > 0) {
+      const maxSideIdx = sides.indexOf(Math.max(...sides));
+      const maxAngIdx = angles.indexOf(Math.max(...angles));
+      if(maxSideIdx === maxAngIdx) consistent.push({t:'✓ Maior lado = maior ângulo',c:'tag-green'});
+      else consistent.push({t:'⚠ Maior lado ≠ maior ângulo',c:'tag-yellow'});
+    }
+
+    return { mainName, subName, tags, consistent };
+  }
+};
+
+// ═══════════════════════════════════════════════
+//  MODULE: IMAGE
+// ═══════════════════════════════════════════════
+function loadImage(evt) {
+  const file = evt.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = new Image();
+    img.onload = () => {
+      State.imageObj = img;
+      State.image = e.target.result;
+      State.points = [];
+      State.scalePoints = [];
+      State.scalePx = null;
+      State.results = null;
+      fitImageToCanvas(img);
+      setMode('idle');
+      updateScaleStatus('idle','Imagem carregada — marque a escala');
+      updateMarkStatus();
+      hideResults();
+      render();
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function fitImageToCanvas() {
+  const img = State.imageObj;
+  const W = canvas.width, H = canvas.height;
+  const scale = Math.min((W-40)/img.width, (H-40)/img.height, 1);
+  State.imgScale = scale;
+  State.imgOffX = (W - img.width*scale)/2;
+  State.imgOffY = (H - img.height*scale)/2;
+}
+
+// ═══════════════════════════════════════════════
+//  MODULE: MODES
+// ═══════════════════════════════════════════════
+function setMode(m) {
+  State.mode = m;
+  const texts = {
+    idle: 'Aguardando',
+    scale1: 'Marque o PRIMEIRO ponto de escala',
+    scale2: 'Marque o SEGUNDO ponto de escala',
+    mark: 'Clique para adicionar vértices',
+    manual: 'Clique para adicionar vértices',
+  };
+  setModeIndicator(texts[m]||m, m!=='idle');
+  document.querySelectorAll('.tool-btn, .btn').forEach(b=>b.classList.remove('active'));
+}
+
+function setModeIndicator(text, active) {
+  document.getElementById('mode-text').textContent = text;
+  const dot = document.querySelector('#mode-indicator .status-dot');
+  dot.classList.toggle('pulse', active);
+}
+
+function startScaleMode() {
+  if(!State.imageObj && State.tab==='image') { alert('Carregue uma imagem primeiro!'); return; }
+  State.scalePoints = [];
+  State.scalePx = null;
+  State.scaleReal = parseFloat(document.getElementById('scale-value').value)||10;
+  State.scaleUnit = document.getElementById('scale-unit').value;
+  setMode('scale1');
+  updateScaleStatus('active','Clique no 1º ponto de referência');
+  document.getElementById('sn1').classList.remove('done');
+  document.getElementById('sn2').classList.remove('done');
+}
+
+function startMarkMode() {
+  if(!State.imageObj && State.tab==='image') { alert('Carregue uma imagem primeiro!'); return; }
+  if(!State.scalePx && State.tab==='image') {
+    if(!confirm('Escala não definida. Usar escala em pixels?')) return;
+  }
+  State.points = [];
+  State.results = null;
+  hideResults();
+  setMode('mark');
+  updateMarkStatus();
+  render();
+}
+
+function startManualMode() {
+  State.points = [];
+  State.results = null;
+  hideResults();
+  setMode('manual');
+  updateManualStatus();
+  render();
+}
+
+function undoPoint() {
+  if(State.points.length > 0) {
+    State.points.pop();
+    updateMarkStatus();
+    updateManualStatus();
+    render();
+  }
+}
+
+// ═══════════════════════════════════════════════
+//  MODULE: CANVAS INTERACTION
+// ═══════════════════════════════════════════════
+function canvasCoords(e) {
+  const rect = canvas.getBoundingClientRect();
+  const raw = e.touches ? e.touches[0] : e;
+  const cx = (raw.clientX - rect.left);
+  const cy = (raw.clientY - rect.top);
+  // Account for zoom/pan
+  return {
+    x: (cx - State.pan.x) / State.zoom,
+    y: (cy - State.pan.y) / State.zoom,
+  };
+}
+
+canvas.addEventListener('mousemove', e => {
+  const p = canvasCoords(e);
+  document.getElementById('coord-display').textContent = `x: ${p.x.toFixed(0)}  y: ${p.y.toFixed(0)}`;
+});
+
+canvas.addEventListener('click', e => {
+  const p = canvasCoords(e);
+  if(State.mode === 'scale1') {
+    State.scalePoints = [p];
+    setMode('scale2');
+    updateScaleStatus('active','Clique no 2º ponto de referência');
+    document.getElementById('sn1').classList.add('done');
+    render();
+  } else if(State.mode === 'scale2') {
+    State.scalePoints.push(p);
+    State.scalePx = Math.hypot(p.x-State.scalePoints[0].x, p.y-State.scalePoints[0].y);
+    State.scaleReal = parseFloat(document.getElementById('scale-value').value)||10;
+    State.scaleUnit = document.getElementById('scale-unit').value;
+    setMode('idle');
+    updateScaleStatus('active',`Escala: 1px = ${(State.scaleReal/State.scalePx).toFixed(4)} ${State.scaleUnit}`);
+    document.getElementById('sn2').classList.add('done');
+    render();
+  } else if(State.mode === 'mark' || State.mode === 'manual') {
+    State.points.push(p);
+    updateMarkStatus();
+    updateManualStatus();
+    render();
+  }
+});
+
+canvas.addEventListener('touchstart', e => {
+  e.preventDefault();
+  canvas.dispatchEvent(new MouseEvent('click', {
+    clientX: e.touches[0].clientX,
+    clientY: e.touches[0].clientY,
+  }));
+}, {passive:false});
+
+// ═══════════════════════════════════════════════
+//  MODULE: CALCULATE & SHOW
+// ═══════════════════════════════════════════════
+function calculateAndShow() {
+  const pts = State.points;
+  if(pts.length < 3) { alert('Marque pelo menos 3 vértices!'); return; }
+
+  // Roda a análise geométrica
+  const res = Geo.analyze(pts);
+  const cls = Geo.classify(res);
+  res.classification = cls;
+  State.results = res;
+
+  // Always show angles after calculation
+  State.showAngles = true;
+  State.showLabels = true;
+  document.getElementById('tool-angles').classList.add('active');
+  document.getElementById('tool-labels').classList.add('active');
+
+  render();
+  showResults(res, cls);
+  updateCanvasInfo(res, cls);
+}
+
+function showResults(res, cls) {
+  document.getElementById('results-section').style.display = 'block';
+  document.getElementById('results-section').classList.add('fadeIn');
+
+  // Badge
+  document.getElementById('figure-badge-wrap').innerHTML = `
+    <div class="figure-badge">
+      <div class="name">${cls.mainName}${cls.subName?' '+cls.subName:''}</div>
+      <div class="sub">${res.n} lados · ${res.angles.length} ângulos</div>
+    </div>`;
+
+  // Measures
+  document.getElementById('results-measures').innerHTML = `
+    <div class="result-item">
+      <span class="result-label">Figura</span>
+      <span class="result-value highlight">${cls.mainName}</span>
+    </div>
+    <div class="result-item">
+      <span class="result-label">Nº de lados</span>
+      <span class="result-value">${res.n}</span>
+    </div>
+    <div class="result-item">
+      <span class="result-label">Perímetro</span>
+      <span class="result-value highlight2">${res.perimeter.toFixed(2)} ${State.scaleUnit}</span>
+    </div>
+    <div class="result-item">
+      <span class="result-label">Área</span>
+      <span class="result-value highlight3">${res.area.toFixed(2)} ${State.scaleUnit}²</span>
+    </div>
+    <div class="result-item">
+      <span class="result-label">Soma ângulos</span>
+      <span class="result-value">${res.actualAngleSum.toFixed(1)}° <small style="color:var(--text3)">(esp: ${res.expectedAngleSum}°)</small></span>
+    </div>`;
+
+  // Classification
+  const tagsHtml = [...cls.tags, ...cls.consistent].map(t=>`<span class="tag ${t.c}">${t.t}</span>`).join('');
+  document.getElementById('results-classification').innerHTML = `<div class="tag-list">${tagsHtml||'<span class="tag tag-blue">Polígono</span>'}</div>`;
+
+  // Details
+  let detailHtml = '<table class="side-table"><thead><tr><th>Lado</th><th>Comprimento</th></tr></thead><tbody>';
+  res.sides.forEach((s,i)=>{
+    const l1 = String.fromCharCode(65+i), l2 = String.fromCharCode(65+(i+1)%res.n);
+    detailHtml += `<tr><td style="color:var(--accent)">${l1}${l2}</td><td style="color:var(--text)">${s.toFixed(2)} ${State.scaleUnit}</td></tr>`;
+  });
+  detailHtml += '</tbody></table>';
+
+  if(res.angles.length > 0) {
+    detailHtml += '<div style="margin-top:10px"><table class="side-table"><thead><tr><th>Vértice</th><th>Ângulo</th></tr></thead><tbody>';
+    res.angles.forEach((a,i)=>{
+      detailHtml += `<tr><td style="color:var(--accent4)">${String.fromCharCode(65+i)}</td><td style="color:var(--text)">${a.toFixed(2)}°</td></tr>`;
+    });
+    detailHtml += '</tbody></table></div>';
+  }
+  document.getElementById('results-details').innerHTML = detailHtml;
+}
+
+function hideResults() {
+  document.getElementById('results-section').style.display = 'none';
+}
+
+function updateCanvasInfo(res, cls) {
+  document.getElementById('canvas-info').textContent =
+    `${cls.mainName} · P=${res.perimeter.toFixed(1)}${State.scaleUnit} · A=${res.area.toFixed(1)}${State.scaleUnit}²`;
+}
+
+// ═══════════════════════════════════════════════
+//  MODULE: UI HELPERS
+// ═══════════════════════════════════════════════
+function updateScaleStatus(type, msg) {
+  const el = document.getElementById('scale-status');
+  el.className = `status-bar status-${type}`;
+  const dot = el.querySelector('.status-dot');
+  dot.classList.toggle('pulse', type==='active');
+  el.querySelector('span').textContent = msg;
+}
+
+function updateMarkStatus() {
+  const n = State.points.length;
+  const el = document.getElementById('mark-status');
+  if(!el) return;
+  el.className = `status-bar ${n>0?'status-active':'status-idle'}`;
+  el.querySelector('span').textContent = `${n} vértice${n!==1?'s':''} marcado${n!==1?'s':''}`;
+  el.querySelector('.status-dot').classList.toggle('pulse', n>0);
+}
+
+function updateManualStatus() {
+  const n = State.points.length;
+  const el = document.getElementById('manual-status');
+  if(!el) return;
+  el.className = `status-bar ${n>0?'status-active':'status-idle'}`;
+  el.querySelector('span').textContent = `${n} vértice${n!==1?'s':''}`;
+  el.querySelector('.status-dot').classList.toggle('pulse', n>0);
+}
+
+function clearAll() {
+  State.imageObj = null; State.image = null;
+  State.points = []; State.scalePoints = []; State.scalePx = null; State.results = null;
+  setMode('idle');
+  hideResults();
+  updateScaleStatus('idle','Aguardando imagem...');
+  updateMarkStatus();
+  updateManualStatus();
+  document.getElementById('canvas-info').textContent = 'Nenhuma figura';
+  document.getElementById('sn1').classList.remove('done');
+  document.getElementById('sn2').classList.remove('done');
+  // Reset file input so the same file can be re-selected after clearing
+  const inp = document.getElementById('img-upload');
+  if(inp) inp.value = '';
+  render();
+}
+
+// ═══════════════════════════════════════════════
+//  MODULE: TABS
+// ═══════════════════════════════════════════════
+function switchTab(tab) {
+  State.tab = tab;
+  document.getElementById('content-image').style.display = tab==='image'?'flex':'none';
+  if(tab==='image') document.getElementById('content-image').style.flexDirection='column';
+  document.getElementById('content-image').style.gap = '16px';
+  document.getElementById('content-manual').style.display = tab==='manual'?'flex':'none';
+  if(tab==='manual') document.getElementById('content-manual').style.flexDirection='column';
+  document.getElementById('content-manual').style.gap = '16px';
+  document.getElementById('tab-image').classList.toggle('active', tab==='image');
+  document.getElementById('tab-manual').classList.toggle('active', tab==='manual');
+  clearAll();
+}
+
+// ═══════════════════════════════════════════════
+//  MODULE: TOOLS
+// ═══════════════════════════════════════════════
+function toggleGrid() {
+  State.showGrid = !State.showGrid;
+  document.getElementById('tool-grid').classList.toggle('active', State.showGrid);
+  render();
+}
+
+function toggleLabels() {
+  State.showLabels = !State.showLabels;
+  document.getElementById('tool-labels').classList.toggle('active', State.showLabels);
+  render();
+}
+
+function toggleAngles() {
+  State.showAngles = !State.showAngles;
+  document.getElementById('tool-angles').classList.toggle('active', State.showAngles);
+  render();
+}
+
+function zoomIn() { State.zoom = Math.min(State.zoom*1.2, 8); render(); }
+function zoomOut() { State.zoom = Math.max(State.zoom/1.2, 0.2); render(); }
+function resetView() { State.zoom=1; State.pan={x:0,y:0}; if(State.imageObj) fitImageToCanvas(); render(); }
+
+// Scroll to zoom
+canvas.addEventListener('wheel', e => {
+  e.preventDefault();
+  const rect = canvas.getBoundingClientRect();
+  const cx = e.clientX - rect.left;
+  const cy = e.clientY - rect.top;
+  const factor = e.deltaY < 0 ? 1.12 : 1/1.12;
+  State.pan.x = cx - (cx - State.pan.x)*factor;
+  State.pan.y = cy - (cy - State.pan.y)*factor;
+  State.zoom = Math.max(0.2, Math.min(8, State.zoom*factor));
+  render();
+}, {passive:false});
+
+// Pan with right-click drag
+let panStart = null;
+canvas.addEventListener('mousedown', e => {
+  if(e.button===2) { panStart={x:e.clientX-State.pan.x, y:e.clientY-State.pan.y}; }
+});
+canvas.addEventListener('mousemove', e => {
+  if(panStart) { State.pan={x:e.clientX-panStart.x, y:e.clientY-panStart.y}; render(); }
+});
+canvas.addEventListener('mouseup', () => panStart=null);
+canvas.addEventListener('contextmenu', e=>e.preventDefault());
+
+// ═══════════════════════════════════════════════
+//  MODULE: EXPORT
+// ═══════════════════════════════════════════════
+function downloadCanvas() {
+  const link = document.createElement('a');
+  link.download = 'detector-geometrico.png';
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+}
+
+function sendEmail() {
+  const res = State.results;
+  if(!res) { alert('Calcule uma figura primeiro!'); return; }
+  const cls = res.classification;
+  const email = document.getElementById('prof-email').value || 'professor@email.com';
+  const subject = encodeURIComponent(`Resultado Geométrico — ${cls.mainName}`);
+
+  const sidesStr = res.sides.map((s,i)=>{
+    const l1=String.fromCharCode(65+i), l2=String.fromCharCode(65+(i+1)%res.n);
+    return `  Lado ${l1}${l2}: ${s.toFixed(2)} ${State.scaleUnit}`;
+  }).join('\n');
+
+  const anglesStr = res.angles.map((a,i)=>
+    `  Vértice ${String.fromCharCode(65+i)}: ${a.toFixed(2)}°`
+  ).join('\n');
+
+  const tagsStr = cls.tags.map(t=>t.t).join(', ');
+
+  const body = encodeURIComponent(
+`=== DETECTOR GEOMÉTRICO ARQUIMEDES ===
+
+Figura: ${cls.mainName}${cls.subName?' ('+cls.subName+')':''}
+Classificação: ${tagsStr}
+Número de lados: ${res.n}
+
+Perímetro: ${res.perimeter.toFixed(2)} ${State.scaleUnit}
+Área: ${res.area.toFixed(2)} ${State.scaleUnit}²
+Soma dos ângulos: ${res.actualAngleSum.toFixed(1)}° (esperado: ${res.expectedAngleSum}°)
+
+--- Lados ---
+${sidesStr}
+
+--- Ângulos ---
+${anglesStr}
+
+---
+Gerado pelo Detector Geométrico Arquimedes
+Ensino Fundamental II · Fortaleza/CE`
+  );
+
+  window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
+}
+
+// ═══════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════
+window.addEventListener('resize', resizeCanvas);
+
+// Initialize tool buttons
+document.getElementById('tool-grid').classList.add('active');
+document.getElementById('tool-labels').classList.add('active');
+document.getElementById('tool-angles').classList.add('active');
+
+// Fix flex display for tab content
+document.getElementById('content-image').style.cssText = 'display:flex;flex-direction:column;gap:16px';
+document.getElementById('content-manual').style.cssText = 'display:none;flex-direction:column;gap:16px';
+
+resizeCanvas();
+render();
+</script>
 </body>
 </html>
